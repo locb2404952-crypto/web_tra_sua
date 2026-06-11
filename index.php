@@ -78,6 +78,6 @@ if ($result_products && $result_products->num_rows > 0) {
         <p style="text-align: center; font-size: 1.2rem; color: #999;">Hiện tại chưa có món ăn nào trong hệ thống.</p>
     <?php endif; ?>
 </div>
-
+// lộc khùng
 </body>
 </html>
