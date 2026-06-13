@@ -1,20 +1,17 @@
 <?php
-// Thông tin cấu hình kết nối MySQL XAMPP
-$host = "localhost";
-$username = "root";
-$password = "";
-$dbname = "web_tra_sua"; // Tên database 5 bảng của bạn
+$servername = "localhost";
+$username = "root";     // Mặc định của XAMPP và Laragon
+$password = "";         // Mặc định của XAMPP để trống (nếu dùng Laragon cũng để trống)
+$dbname = "web_tra_sua"; // Tên database mà cả nhóm thống nhất đặt giống nhau
 
-// Tiến hành kết nối
-$conn = new mysqli($host, $username, $password, $dbname);
+// Tạo kết nối đến MySQL
+$conn = mysqli_connect($servername, $username, $password, $dbname);
 
-// Kiểm tra xem kết nối có bị lỗi không
-if ($conn->connect_error) {
-    die("Kết nối cơ sở dữ liệu thất bại: " . $conn->connect_error);
+// Kiểm tra kết nối xem có thành công không
+if (!$conn) {
+    die("Kết nối database thất bại: " . mysqli_connect_error());
 }
 
-// Cấu hình hiển thị tiếng Việt có dấu không bị lỗi font
-$conn->set_charset("utf8mb4");
-
-
+// Cấu hình tiếng Việt để khi xuất dữ liệu ra web không bị lỗi font (???)
+mysqli_set_charset($conn, "utf8mb4");
 ?>
