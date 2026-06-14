@@ -79,12 +79,12 @@ if ($result_products && $result_products->num_rows > 0) {
     <?php endif; ?>
 </div>
 
-// none ở đây khi mở wed lên nó sẽ ẩn đi cho tới khi họ bấm nút đặt món
+<!-- // none ở đây khi mở wed lên nó sẽ ẩn đi cho tới khi họ bấm nút đặt món -->
 <div id="orderModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999;">
     <div style="background: #fff; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
         <h3 style="margin-top: 0; margin-bottom: 15px; color: #333;">Thông Tin Đặt Hàng</h3>
 
-        //khi họ đièn xong và bấm nút xác nhận đặt code sẽ chặn wed kco tải lại và bắn ra thông báo đặt đc ch rồi sẽ dongForm()
+        <!-- //khi họ đièn xong và bấm nút xác nhận đặt code sẽ chặn wed kco tải lại và bắn ra thông báo đặt đc ch rồi sẽ dongForm() -->
         <form id="formDatHang" onsubmit="event.preventDefault(); alert('Tuần 1: Chạy thử thành công! Đã bắt được dữ liệu đặt hàng.'); dongForm();">
             <div style="margin-bottom: 16px;">
                 <label style="display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.9rem;">Họ và tên:</label>
