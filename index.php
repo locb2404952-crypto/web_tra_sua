@@ -67,7 +67,7 @@ if ($result_products && $result_products->num_rows > 0) {
                             </div>
                             <div class="product-footer">
                                 <span class="product-price"><?php echo number_format($product['price'], 0, ',', '.'); ?>đ</span>
-                                <button class="btn-order">Đặt món</button>
+                                <button class="btn-order" onclick="moForm()">Đặt món</button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -78,6 +78,41 @@ if ($result_products && $result_products->num_rows > 0) {
         <p style="text-align: center; font-size: 1.2rem; color: #999;">Hiện tại chưa có món ăn nào trong hệ thống.</p>
     <?php endif; ?>
 </div>
-// lộc khùng
+
+// none ở đây khi mở wed lên nó sẽ ẩn đi cho tới khi họ bấm nút đặt món
+<div id="orderModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999;">
+    <div style="background: #fff; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+        <h3 style="margin-top: 0; margin-bottom: 15px; color: #333;">Thông Tin Đặt Hàng</h3>
+
+        //khi họ đièn xong và bấm nút xác nhận đặt code sẽ chặn wed kco tải lại và bắn ra thông báo đặt đc ch rồi sẽ dongForm()
+        <form id="formDatHang" onsubmit="event.preventDefault(); alert('Tuần 1: Chạy thử thành công! Đã bắt được dữ liệu đặt hàng.'); dongForm();">
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.9rem;">Họ và tên:</label>
+                <input type="text" id="khachHangTen" placeholder="Nhập họ và tên của bạn" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.9rem;">Số điện thoại:</label>
+                <input type="text" id="khachHangSdt" placeholder="Nhập số điện thoại" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="dongForm()" style="padding: 8px 16px; background: #eee; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Hủy</button>
+                <button type="submit" style="padding: 8px 16px; background: #ff7675; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Xác nhận đặt</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // moForm(): Tìm đến cái hộp thoại bằng ID và đổi display thành flex để nó hiện lên màn hình
+function moForm() {
+    document.getElementById('orderModal').style.display = 'flex';
+}
+   // dongForm(): Tìm đến hộp thoại bằng ID và đổi display về lại none để giấu nó đi
+function dongForm() {
+    document.getElementById('orderModal').style.display = 'none';
+}
+</script>
 </body>
 </html>
