@@ -2,16 +2,35 @@
 // 1. Nhúng file kết nối database
 require_once 'db-connect.php';
 
-// 2. XỬ LÝ KHI NGƯỜI DÙNG BẤM LƯU THÊM MÓN MỚI
+// 2. XỬ LÝ KHI NGƯỜI DÙNG BẤM LƯU THÊM MÓN MỚI (CÓ ĐĂNG ẢNH)
 if (isset($_POST['add_product'])) {
     $product_name = mysqli_real_escape_string($conn, $_POST['product_name']);
     $category_id = intval($_POST['category_id']);
     $price = floatval($_POST['price']);
     $description = mysqli_real_escape_string($conn, $_POST['description']);
+    
+    // Mặc định nếu không đăng ảnh thì lấy ảnh default.png của nhóm bạn
+    $image_url = 'default.png'; 
+
+    // Kiểm tra xem người dùng có chọn file ảnh và file không bị lỗi không
+    if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
+        $target_dir = "uploads/"; // Thư mục lưu trữ file ảnh trên máy
+        
+        // Đổi tên file ảnh thành chuỗi thời gian để không bị trùng tên file cũ
+        $file_extension = pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION);
+        $new_file_name = time() . '_' . uniqid() . '.' . $file_extension;
+        $target_file = $target_dir . $new_file_name;
+
+        // Tiến hành di chuyển file ảnh từ bộ nhớ tạm vào thư mục uploads
+        if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) {
+            $image_url = $new_file_name; // Lưu tên file mới để nạp vào database
+        }
+    }
 
     if (!empty($product_name) && $price > 0 && $category_id > 0) {
-        $sql_insert = "INSERT INTO products (category_id, product_name, price, description) 
-                       VALUES ($category_id, '$product_name', $price, '$description')";
+        // Đã thêm cột image_url vào câu lệnh INSERT
+        $sql_insert = "INSERT INTO products (category_id, product_name, price, description, image_url) 
+                       VALUES ($category_id, '$product_name', $price, '$description', '$image_url')";
         if ($conn->query($sql_insert)) {
             header("Location: admin.php");
             exit();
@@ -38,7 +57,19 @@ if (isset($_POST['edit_product'])) {
     }
 }
 
-// 4. Lấy danh sách danh mục để bỏ vào ô chọn (Select box)
+// 4. XỬ LÝ KHI NGƯỜI DÙNG BẤM XÓA MÓN ĂN
+if (isset($_GET['delete_id'])) {
+    $product_id = intval($_GET['delete_id']);
+    if ($product_id > 0) {
+        $sql_delete = "DELETE FROM products WHERE product_id = $product_id";
+        if ($conn->query($sql_delete)) {
+            header("Location: admin.php");
+            exit();
+        }
+    }
+}
+
+// 5. Lấy danh sách danh mục để bỏ vào ô chọn (Select box)
 $sql_cate = "SELECT * FROM categories";
 $result_cate = $conn->query($sql_cate);
 $categories = [];
@@ -48,7 +79,7 @@ if ($result_cate && $result_cate->num_rows > 0) {
     }
 }
 
-// 5. Lấy toàn bộ sản phẩm và tên danh mục hiển thị lên bảng
+// 6. Lấy toàn bộ sản phẩm hiển thị lên bảng
 $sql = "SELECT p.*, c.category_name 
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.category_id 
@@ -137,7 +168,7 @@ $result = $conn->query($sql);
                                 '<?php echo $row['price']; ?>',
                                 '<?php echo addslashes($row['description']); ?>'
                             )">Sửa</button>
-                            <button class="btn btn-delete">Xóa</button>
+                            <button class="btn btn-delete" onclick="confirmDelete('<?php echo $row['product_id']; ?>', '<?php echo addslashes($row['product_name']); ?>')">Xóa</button>
                         </td>
                     </tr>
                     <?php
@@ -153,7 +184,7 @@ $result = $conn->query($sql);
 <div id="addProductModal" class="modal">
     <div class="modal-content">
         <div class="modal-title">Thêm Sản Phẩm Mới</div>
-        <form action="admin.php" method="POST">
+        <form action="admin.php" method="POST" enctype="multipart/form-data">
             <div class="form-group">
                 <label>Tên món ăn / thức uống:</label>
                 <input type="text" name="product_name" class="form-control" placeholder="Ví dụ: Trà sữa Matcha" required>
@@ -171,6 +202,12 @@ $result = $conn->query($sql);
                 <label>Giá bán (VNĐ):</label>
                 <input type="number" name="price" class="form-control" placeholder="Ví dụ: 35000" required>
             </div>
+            
+            <div class="form-group">
+                <label>Hình ảnh sản phẩm:</label>
+                <input type="file" name="product_image" class="form-control" accept="image/*">
+            </div>
+
             <div class="form-group">
                 <label>Mô tả ngắn:</label>
                 <textarea name="description" class="form-control" rows="3" placeholder="Vị béo ngậy ngon tuyệt..."></textarea>
@@ -188,7 +225,6 @@ $result = $conn->query($sql);
         <div class="modal-title">Chỉnh Sửa Sản Phẩm</div>
         <form action="admin.php" method="POST">
             <input type="hidden" name="product_id" id="edit_product_id">
-            
             <div class="form-group">
                 <label>Tên món ăn / thức uống:</label>
                 <input type="text" name="product_name" id="edit_product_name" class="form-control" required>
@@ -218,12 +254,10 @@ $result = $conn->query($sql);
 </div>
 
 <script>
-    // Hàm mở form Thêm
     function openAddModal() {
         document.getElementById('addProductModal').style.display = 'flex';
     }
     
-    // Hàm mở form Sửa và tự động đổ dữ liệu cũ của dòng đó vào các ô input
     function openEditModal(id, name, category_id, price, description) {
         document.getElementById('edit_product_id').value = id;
         document.getElementById('edit_product_name').value = name;
@@ -233,12 +267,16 @@ $result = $conn->query($sql);
         document.getElementById('editProductModal').style.display = 'flex';
     }
 
-    // Hàm đóng form chung
     function closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
     }
 
-    // Đóng khi click ra ngoài vùng trắng của pop-up
+    function confirmDelete(id, name) {
+        if (confirm("Bạn có chắc chắn muốn xóa món \"" + name + "\" khỏi thực đơn không?")) {
+            window.location.href = "admin.php?delete_id=" + id;
+        }
+    }
+
     window.onclick = function(event) {
         if (event.target.classList.contains('modal')) {
             event.target.style.display = 'none';
