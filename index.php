@@ -44,6 +44,11 @@ if ($result_products && $result_products->num_rows > 0) {
         .product-price { font-size: 1.2rem; color: #e67e22; font-weight: bold; }
         .btn-order { background-color: #ff7675; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
         .btn-order:hover { background-color: #d63031; }
+        /* === PHẦN CSS Ô TÌM KIẾM CỦA q.con === */
+        .search-container { text-align: center; margin-bottom: 30px; }
+        .search-input { padding: 10px 15px; width: 300px; border: 2px solid #ff7675; border-radius: 20px; outline: none; font-size: 1rem; }
+        .btn-search { background-color: #ff7675; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 1rem; margin-left: 10px; transition: background 0.2s; }
+        .btn-search:hover { background-color: #d63031; }
     </style>
 </head>
 <body>
@@ -53,6 +58,12 @@ if ($result_products && $result_products->num_rows > 0) {
         <h1>QUÁN TRÀ SỮA & ĐỒ ĂN VẶT HOMIE</h1>
         <p>Menu siêu ngon - Càng ăn càng ghiền!</p>
     </header>
+    <div class="search-container">
+        <form action="" method="GET">
+            <input type="text" class="search-input" placeholder="Nhập tên trà sữa, đồ ăn..." name="search">
+            <button type="submit" class="btn-search">Tìm kiếm</button>
+        </form>
+    </div>
 
     <?php if (!empty($menu)): ?>
         <?php foreach ($menu as $category_name => $products): ?>
