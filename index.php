@@ -2,6 +2,32 @@
 // kết nối cơ sở dữ liệu vào
 require_once 'db-connect.php';
 
+$thong_bao = ""; // Biến dùng để lưu trạng thái thông báo cho khách hàng
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
+    // 1. Lấy dữ liệu từ form gửi lên và ép kiểu để bảo mật sạch sẽ
+    $ten_khach = mysqli_real_escape_string($conn, $_POST['khach_ten']);
+    $sdt = mysqli_real_escape_string($conn, $_POST['khach_sdt']);
+    
+    // Kiểm tra xem khách có bỏ trống ô nào không
+    if (empty($ten_khach) || empty($sdt)) {
+        $thong_bao = "vui_long_nhap_du";
+    } else {
+        // 2. Viết câu lệnh SQL để chèn dữ liệu vào bảng orders của Lộc
+        // Mặc định tổng tiền (total_amount) tạm thời để 0đ hoặc cập nhật sau ở w3
+        $sql_insert_order = "INSERT INTO orders (user_id, total_amount, status) 
+                     VALUES (1, 0, 'pending')";
+        
+        // 3. Chạy câu lệnh và kiểm tra kết quả
+        if ($conn->query($sql_insert_order) === TRUE) {
+            $thong_bao = "thanh_cong";
+        } else {
+            $thong_bao = "that_bai";
+        }
+    }
+}
+
+
 // 1. Lấy danh sách các danh mục để làm thanh chọn
 $sql_categories = "SELECT * FROM categories";
 $result_categories = $conn->query($sql_categories);
@@ -89,27 +115,24 @@ if ($result_products && $result_products->num_rows > 0) {
         <p style="text-align: center; font-size: 1.2rem; color: #999;">Hiện tại chưa có món ăn nào trong hệ thống.</p>
     <?php endif; ?>
 </div>
-
-<!-- // none ở đây khi mở wed lên nó sẽ ẩn đi cho tới khi họ bấm nút đặt món -->
 <div id="orderModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999;">
     <div style="background: #fff; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
         <h3 style="margin-top: 0; margin-bottom: 15px; color: #333;">Thông Tin Đặt Hàng</h3>
 
-        <!-- //khi họ đièn xong và bấm nút xác nhận đặt code sẽ chặn wed kco tải lại và bắn ra thông báo đặt đc ch rồi sẽ dongForm() -->
-        <form id="formDatHang" onsubmit="event.preventDefault(); alert('Đặt hàng thành công!.'); dongForm();">
+        <form id="formDatHang" action="" method="POST">
             <div style="margin-bottom: 16px;">
                 <label style="display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.9rem;">Họ và tên:</label>
-                <input type="text" id="khachHangTen" placeholder="Nhập họ và tên của bạn" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+                <input type="text" id="khachHangTen" name="khach_ten" placeholder="Nhập họ và tên của bạn" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" required>
             </div>
             
             <div style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.9rem;">Số điện thoại:</label>
-                <input type="text" id="khachHangSdt" placeholder="Nhập số điện thoại" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+                <input type="text" id="khachHangSdt" name="khach_sdt" placeholder="Nhập số điện thoại" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" required>
             </div>
             
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button type="button" onclick="dongForm()" style="padding: 8px 16px; background: #eee; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Hủy</button>
-                <button type="submit" style="padding: 8px 16px; background: #ff7675; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Xác nhận đặt</button>
+                <button type="submit" name="btn_dat_hang" style="padding: 8px 16px; background: #ff7675; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Xác nhận đặt</button>
             </div>
         </form>
     </div>
@@ -124,6 +147,18 @@ function moForm() {
 function dongForm() {
     document.getElementById('orderModal').style.display = 'none';
 }
+
+
+// Bắn thông báo dựa trên kết quả PHP trả về sau khi load lại trang
+<?php if ($thong_bao == "thanh_cong"): ?>
+    alert('Đặt hàng thành công! Đơn hàng của bạn đã được ghi nhận vào hệ thống.');
+<?php elseif ($thong_bao == "vui_long_nhap_du"): ?>
+    alert('Vui lòng điền đầy đủ Họ tên và Số điện thoại!');
+    moForm(); // Hiện lại form cho khách nhập lại
+<?php elseif ($thong_bao == "that_bai"): ?>
+    alert('Có lỗi xảy ra, không thể lưu đơn hàng. Vui lòng thử lại!');
+<?php endif; ?>
 </script>
+
 </body>
 </html>
