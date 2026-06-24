@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
         // 2. Viết câu lệnh SQL để chèn dữ liệu vào bảng orders của Lộc
         // Mặc định tổng tiền (total_amount) tạm thời để 0đ hoặc cập nhật sau ở w3
         $sql_insert_order = "INSERT INTO orders (user_id, total_amount, status) 
-                     VALUES (1, 0, 'pending')";
+                             VALUES (1, 0, 'pending')";
         
         // 3. Chạy câu lệnh và kiểm tra kết quả
         if ($conn->query($sql_insert_order) === TRUE) {
@@ -32,11 +32,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
 $sql_categories = "SELECT * FROM categories";
 $result_categories = $conn->query($sql_categories);
 
-// 2. Lấy toàn bộ sản phẩm kèm theo tên danh mục của nó
-$sql_products = "SELECT p.*, c.category_name 
-                 FROM products p 
-                 JOIN categories c ON p.category_id = c.category_id 
-                 ORDER BY p.category_id ASC, p.product_name ASC";
+
+// =========================================================================
+// PHẦN XỬ LÝ TÌM KIẾM CỦA CỎN (THÀNH VIÊN 3)
+// =========================================================================
+// Kiểm tra xem người dùng có nhập từ khóa tìm kiếm hay không
+$search_keyword = "";
+if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
+    $search_keyword = $conn->real_escape_string(trim($_GET['search']));
+    
+    // Nếu có tìm kiếm: Thêm điều kiện WHERE để lọc theo tên sản phẩm (product_name)
+    $sql_products = "SELECT p.*, c.category_name 
+                     FROM products p 
+                     JOIN categories c ON p.category_id = c.category_id 
+                     WHERE p.product_name LIKE '%$search_keyword%'
+                     ORDER BY p.category_id ASC, p.product_name ASC";
+} else {
+    // Nếu KHÔNG tìm kiếm: Lấy toàn bộ sản phẩm như ban đầu
+    $sql_products = "SELECT p.*, c.category_name 
+                     FROM products p 
+                     JOIN categories c ON p.category_id = c.category_id 
+                     ORDER BY p.category_id ASC, p.product_name ASC";
+}
+// =========================================================================
+
+
 $result_products = $conn->query($sql_products);
 
 // Gom nhóm sản phẩm theo danh mục để dễ hiển thị
@@ -84,10 +104,14 @@ if ($result_products && $result_products->num_rows > 0) {
         <h1>QUÁN TRÀ SỮA & ĐỒ ĂN VẶT HOMIE</h1>
         <p>Menu siêu ngon - Càng ăn càng ghiền!</p>
     </header>
+    
     <div class="search-container">
-        <form action="" method="GET">
-            <input type="text" class="search-input" placeholder="Nhập tên trà sữa, đồ ăn..." name="search">
+        <form action="index.php" method="GET">
+            <input type="text" class="search-input" placeholder="Nhập tên trà sữa, đồ ăn..." name="search" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
             <button type="submit" class="btn-search">Tìm kiếm</button>
+            <?php if(!empty($search_keyword)): ?>
+                <a href="index.php" style="display: block; margin-top: 10px; color: #ff7675; text-decoration: none; font-size: 0.9rem;">[Xóa bộ lọc / Hiển thị tất cả]</a>
+            <?php endif; ?>
         </form>
     </div>
 
@@ -112,9 +136,10 @@ if ($result_products && $result_products->num_rows > 0) {
             </div>
         <?php endforeach; ?>
     <?php else: ?>
-        <p style="text-align: center; font-size: 1.2rem; color: #999;">Hiện tại chưa có món ăn nào trong hệ thống.</p>
+        <p style="text-align: center; font-size: 1.2rem; color: #999;">Không tìm thấy món ăn nào phù hợp với từ khóa của bạn.</p>
     <?php endif; ?>
 </div>
+
 <div id="orderModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999;">
     <div style="background: #fff; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
         <h3 style="margin-top: 0; margin-bottom: 15px; color: #333;">Thông Tin Đặt Hàng</h3>
