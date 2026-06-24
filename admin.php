@@ -1,44 +1,48 @@
 <?php
-// 1. Nhúng file kết nối database
+// 1. Nhúng file kết nối database  
 require_once 'db-connect.php';
 
-// 2. XỬ LÝ KHI NGƯỜI DÙNG BẤM LƯU THÊM MÓN MỚI (CÓ ĐĂNG ẢNH)
+// 2. XỬ LÝ CHỨC NĂNG: THÊM MÓN MỚI 
 if (isset($_POST['add_product'])) {
     $product_name = mysqli_real_escape_string($conn, $_POST['product_name']);
     $category_id = intval($_POST['category_id']);
     $price = floatval($_POST['price']);
     $description = mysqli_real_escape_string($conn, $_POST['description']);
     
-    // Mặc định nếu không đăng ảnh thì lấy ảnh default.png của nhóm bạn
     $image_url = 'default.png'; 
 
-    // Kiểm tra xem người dùng có chọn file ảnh và file không bị lỗi không
     if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
-        $target_dir = "uploads/"; // Thư mục lưu trữ file ảnh trên máy
-        
-        // Đổi tên file ảnh thành chuỗi thời gian để không bị trùng tên file cũ
+        $target_dir = "images/"; 
+        if (!file_exists($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
         $file_extension = pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION);
         $new_file_name = time() . '_' . uniqid() . '.' . $file_extension;
         $target_file = $target_dir . $new_file_name;
 
-        // Tiến hành di chuyển file ảnh từ bộ nhớ tạm vào thư mục uploads
         if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) {
-            $image_url = $new_file_name; // Lưu tên file mới để nạp vào database
+            $image_url = $target_file; 
         }
     }
 
-    if (!empty($product_name) && $price > 0 && $category_id > 0) {
-        // Đã thêm cột image_url vào câu lệnh INSERT
-        $sql_insert = "INSERT INTO products (category_id, product_name, price, description, image_url) 
-                       VALUES ($category_id, '$product_name', $price, '$description', '$image_url')";
-        if ($conn->query($sql_insert)) {
-            header("Location: admin.php");
-            exit();
-        }
+    if (!empty($product_name) && $category_id > 0 && $price > 0) {
+        $sql_add = "INSERT INTO products (category_id, product_name, price, description, image_url) 
+                    VALUES ($category_id, '$product_name', $price, '$description', '$image_url')";
+        mysqli_query($conn, $sql_add);
+        header("Location: admin.php");
+        exit();
     }
 }
 
-// 3. XỬ LÝ KHI NGƯỜI DÙNG CẬP NHẬT (SỬA) MÓN ĂN
+// 3. XỬ LÝ CHỨC NĂNG: XÓA MÓN
+if (isset($_GET['delete_id'])) {
+    $product_id = intval($_GET['delete_id']);
+    $sql_delete = "DELETE FROM products WHERE product_id = $product_id";
+    mysqli_query($conn, $sql_delete);
+    header("Location: admin.php");
+    exit();
+} 
+// 4. XỬ LÝ CHỨC NĂNG: SỬA MÓN (BAO GỒM ĐỔI ẢNH LƯU VÀO IMAGES)
 if (isset($_POST['edit_product'])) {
     $product_id = intval($_POST['product_id']);
     $product_name = mysqli_real_escape_string($conn, $_POST['product_name']);
@@ -46,46 +50,47 @@ if (isset($_POST['edit_product'])) {
     $price = floatval($_POST['price']);
     $description = mysqli_real_escape_string($conn, $_POST['description']);
 
-    if ($product_id > 0 && !empty($product_name) && $price > 0 && $category_id > 0) {
-        $sql_update = "UPDATE products 
-                       SET category_id = $category_id, product_name = '$product_name', price = $price, description = '$description' 
-                       WHERE product_id = $product_id";
-        if ($conn->query($sql_update)) {
-            header("Location: admin.php");
-            exit();
+    if (!empty($product_name) && $price > 0) {
+        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
+            $target_dir = "images/"; 
+            if (!file_exists($target_dir)) {
+                mkdir($target_dir, 0777, true);
+            }
+            $file_extension = pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION);
+            $new_file_name = time() . '_' . uniqid() . '.' . $file_extension;
+            $target_file = $target_dir . $new_file_name;
+
+            if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) {
+                $sql_update = "UPDATE products 
+                               SET product_name = '$product_name', category_id = $category_id, price = $price, description = '$description', image_url = '$target_file' 
+                               WHERE product_id = $product_id";
+            }
+        } else {
+            $sql_update = "UPDATE products 
+                           SET product_name = '$product_name', category_id = $category_id, price = $price, description = '$description' 
+                           WHERE product_id = $product_id";
         }
+        
+        mysqli_query($conn, $sql_update);
+        header("Location: admin.php");
+        exit();
     }
 }
 
-// 4. XỬ LÝ KHI NGƯỜI DÙNG BẤM XÓA MÓN ĂN
-if (isset($_GET['delete_id'])) {
-    $product_id = intval($_GET['delete_id']);
-    if ($product_id > 0) {
-        $sql_delete = "DELETE FROM products WHERE product_id = $product_id";
-        if ($conn->query($sql_delete)) {
-            header("Location: admin.php");
-            exit();
-        }
-    }
-}
-
-// 5. Lấy danh sách danh mục để bỏ vào ô chọn (Select box)
-$sql_cate = "SELECT * FROM categories";
-$result_cate = $conn->query($sql_cate);
-$categories = [];
-if ($result_cate && $result_cate->num_rows > 0) {
-    while($row_c = $result_cate->fetch_assoc()) {
-        $categories[] = $row_c;
-    }
-}
-
-// 6. Lấy toàn bộ sản phẩm hiển thị lên bảng
+// 5. Lấy danh sách sản phẩm hiển thị ra bảng
 $sql = "SELECT p.*, c.category_name 
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.category_id 
         ORDER BY p.product_id DESC";
+$result = mysqli_query($conn, $sql);
 
-$result = $conn->query($sql);
+// 6. Lấy danh sách danh mục để đổ vào thẻ chọn <select>
+$sql_cates = "SELECT * FROM categories ORDER BY category_name ASC";
+$result_cates = mysqli_query($conn, $sql_cates);
+$categories_list = [];
+while($cat = mysqli_fetch_assoc($result_cates)) {
+    $categories_list[] = $cat;
+}
 ?>
 
 <!DOCTYPE html>
@@ -93,39 +98,79 @@ $result = $conn->query($sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang Quản Lý - Quán Trà Sữa & Đồ Ăn Vặt Homie</title>
+    <title>Hệ Thống Quản Lý - Homie Tea & Snack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #fff5f7; color: #333; padding: 20px; }
-        .admin-container { max-width: 1000px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .header-admin { text-align: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #ffe1e9; }
-        .header-admin h1 { color: #ff6b8b; font-size: 28px; text-transform: uppercase; }
-        .product-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
-        .product-table th { background-color: #ff8da1; color: white; font-weight: 600; padding: 12px 15px; text-align: left; }
-        .product-table td { padding: 12px 15px; border-bottom: 1px solid #ffe1e9; vertical-align: middle; }
-        .product-table tbody tr:hover { background-color: #fff9fa; }
-        .product-price { color: #ff4d6d; font-weight: bold; }
-        .btn { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-block; transition: all 0.2s; }
-        .btn-edit { background-color: #ffb3c1; color: #fff; margin-right: 5px; }
-        .btn-edit:hover { background-color: #ff8da1; }
-        .btn-delete { background-color: #ff4d6d; color: #fff; }
-        .btn-delete:hover { background-color: #c9184a; }
-        .btn-add { background-color: #ff6b8b; color: white; padding: 10px 15px; margin-bottom: 15px; float: right; }
-        .btn-add:hover { background-color: #ff4d6d; }
-        .clearfix::after { content: ""; clear: both; display: table; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #fff5f7 0%, #fde2e4 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #2d3748;
+        }
+        .admin-container {
+            max-width: 1150px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(255, 154, 162, 0.15);
+        }
+        .header-admin { text-align: center; margin-bottom: 35px; }
+        .header-admin h1 {
+            background: linear-gradient(90deg, #ff4d6d, #ff758f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 32px;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .header-admin p { color: #718096; font-size: 14px; font-weight: 500; }
+        
+        .btn-trigger-add {
+            background: linear-gradient(90deg, #ff4d6d, #ff758f);
+            color: white; padding: 12px 24px; border: none; border-radius: 12px;
+            font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(255, 77, 109, 0.3); transition: all 0.2s;
+        }
+        .btn-trigger-add:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255, 77, 109, 0.4); }
 
-        /* Cửa sổ Form ẩn bật lên (Modal Popup) */
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
-        .modal-content { background-color: #fff; padding: 25px; border-radius: 12px; width: 450px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-title { color: #ff6b8b; margin-bottom: 20px; font-size: 20px; border-bottom: 2px solid #fff5f7; padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px; color: #555; }
-        .form-control { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; outline: none; font-size: 14px; }
-        .form-control:focus { border-color: #ff8da1; }
-        .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        .btn-close { background-color: #eee; color: #333; }
-        .btn-save { background-color: #ff6b8b; color: white; }
+        .table-wrapper { width: 100%; border-radius: 16px; overflow: hidden; border: 1px solid #ffe5ec; }
+        .product-table { width: 100%; border-collapse: collapse; background: #fff; text-align: left; }
+        .product-table th { background: linear-gradient(90deg, #ff758f 0%, #ff8da1 100%); color: white; font-weight: 600; padding: 18px 24px; font-size: 14px; text-transform: uppercase; }
+        .product-table td { padding: 16px 24px; border-bottom: 1px solid #ffe5ec; font-size: 15px; vertical-align: middle; }
+        .product-table tbody tr:hover { background-color: #fff8f9; }
+        
+        .product-info { display: block; } /* Đổi từ flex sang block để tối ưu hiển thị chữ */
+        .product-name-txt { font-weight: 600; color: #1a202c; font-size: 16px; }
+        .product-desc-txt { font-size: 13px; color: #718096; margin-top: 4px; line-height: 1.4; }
+        .stt-num { font-weight: 700; color: #ff758f; text-align: center; }
+        .cate-badge { background: #ffe5ec; color: #ff4d6d; padding: 6px 14px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .product-price { color: #ff4d6d; font-weight: 700; font-size: 16px; }
+        
+        .btn-group { display: flex; gap: 8px; justify-content: center; }
+        .btn { padding: 8px 16px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+        .btn-edit { background-color: #fff0f3; color: #ff4d6d; border: 1px solid #ffb3c1; }
+        .btn-edit:hover { background-color: #ff4d6d; color: white; }
+        .btn-delete { background-color: #fff5f5; color: #e53e3e; border: 1px solid #feb2b2; }
+        .btn-delete:hover { background-color: #e53e3e; color: white; }
+
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(26, 32, 44, 0.4); backdrop-filter: blur(5px);
+            justify-content: center; align-items: center; overflow-y: auto; padding: 20px;
+        }
+        .modal-content { background-color: #fff; padding: 35px; border-radius: 20px; width: 100%; max-width: 460px; animation: popUp 0.25s ease-out; }
+        @keyframes popUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-title { color: #ff4d6d; margin-bottom: 25px; font-size: 22px; font-weight: 700; text-align: center; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #4a5568; }
+        .form-control { width: 100%; padding: 11px 16px; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; font-size: 14px; transition: all 0.2s; }
+        .form-control:focus { border-color: #ff8da1; box-shadow: 0 0 0 3px rgba(255, 141, 161, 0.15); }
+        textarea.form-control { resize: none; height: 75px; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 12px; margin-top: 25px; }
     </style>
 </head>
 <body>
@@ -133,52 +178,57 @@ $result = $conn->query($sql);
 <div class="admin-container">
     <div class="header-admin">
         <h1>Hệ Thống Quản Lý Cửa Hàng</h1>
+        <p>Bảng chỉnh sửa và cập nhật thực đơn quán trà sữa Homie</p>
     </div>
 
-    <div class="clearfix">
-        <button class="btn btn-add" onclick="openAddModal()">+ Thêm Món Mới</button>
-    </div>
+    <button class="btn-trigger-add" onclick="openModal('addProductModal')">
+        + Thêm Món Mới Vào Menu
+    </button>
 
-    <table class="product-table">
-        <thead>
-            <tr>
-                <th style="width: 8%;">STT</th>
-                <th style="width: 40%;">Tên món ăn / Đồ uống</th>
-                <th style="width: 20%;">Danh mục</th>
-                <th style="width: 17%;">Giá bán</th>
-                <th style="width: 15%; text-align: center;">Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php 
-            if ($result && $result->num_rows > 0) {
-                $stt = 1;
-                while($row = $result->fetch_assoc()) {
-                    ?>
-                    <tr>
-                        <td><?php echo $stt++; ?></td>
-                        <td><strong><?php echo htmlspecialchars($row['product_name']); ?></strong></td>
-                        <td><?php echo htmlspecialchars($row['category_name'] ? $row['category_name'] : 'Chưa phân loại'); ?></td>
-                        <td class="product-price"><?php echo number_format($row['price'], 0, ',', '.'); ?>đ</td>
-                        <td style="text-align: center;">
-                            <button class="btn btn-edit" onclick="openEditModal(
-                                '<?php echo $row['product_id']; ?>',
-                                '<?php echo addslashes($row['product_name']); ?>',
-                                '<?php echo $row['category_id']; ?>',
-                                '<?php echo $row['price']; ?>',
-                                '<?php echo addslashes($row['description']); ?>'
-                            )">Sửa</button>
-                            <button class="btn btn-delete" onclick="confirmDelete('<?php echo $row['product_id']; ?>', '<?php echo addslashes($row['product_name']); ?>')">Xóa</button>
-                        </td>
-                    </tr>
-                    <?php
+    <div class="table-wrapper">
+        <table class="product-table">
+            <thead>
+                <tr>
+                    <th style="width: 8%; text-align: center;">STT</th>
+                    <th style="width: 44%;">Thông tin món ăn / Đồ uống</th>
+                    <th style="width: 18%;">Danh mục</th>
+                    <th style="width: 15%;">Giá bán</th>
+                    <th style="width: 15%; text-align: center;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                if ($result && mysqli_num_rows($result) > 0) {
+                    $stt = 1;
+                    while($row = mysqli_fetch_assoc($result)) {
+                        ?>
+                        <tr>
+                            <td class="stt-num"><?php echo $stt++; ?></td>
+                            <td>
+                                <div class="product-info">
+                                    <div class="product-name-txt"><?php echo htmlspecialchars($row['product_name']); ?></div>
+                                    <div class="product-desc-txt"><?php echo htmlspecialchars($row['description'] ? $row['description'] : 'Chưa có mô tả ngắn.'); ?></div>
+                                </div>
+                            </td>
+                            <td><span class="cate-badge"><?php echo htmlspecialchars($row['category_name'] ? $row['category_name'] : 'Khác'); ?></span></td>
+                            <td class="product-price"><?php echo number_format($row['price'], 0, ',', '.'); ?>đ</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-edit" onclick="openEditModal('<?php echo $row['product_id']; ?>', '<?php echo addslashes($row['product_name']); ?>', '<?php echo $row['category_id']; ?>', '<?php echo $row['price']; ?>', '<?php echo addslashes($row['description']); ?>')">Sửa</button>
+                                    <button class="btn btn-delete" onclick="confirmDelete('<?php echo $row['product_id']; ?>', '<?php echo addslashes($row['product_name']); ?>')">Xóa</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php
+                    }
+                } else {
+                    echo "<tr><td colspan='5' style='text-align:center; padding: 30px; color: #a0aec0;'>Chưa có món ăn nào.</td></tr>";
                 }
-            } else {
-                echo "<tr><td colspan='5' style='text-align:center;'>Không có món ăn nào trong database.</td></tr>";
-            }
-            ?>
-        </tbody>
-    </table>
+                mysqli_close($conn);
+                ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div id="addProductModal" class="modal">
@@ -186,15 +236,15 @@ $result = $conn->query($sql);
         <div class="modal-title">Thêm Sản Phẩm Mới</div>
         <form action="admin.php" method="POST" enctype="multipart/form-data">
             <div class="form-group">
-                <label>Tên món ăn / thức uống:</label>
-                <input type="text" name="product_name" class="form-control" placeholder="Ví dụ: Trà sữa Matcha" required>
+                <label>Tên món ăn / Thức uống:</label>
+                <input type="text" name="product_name" class="form-control" placeholder="Ví dụ: Trà sữa trân châu" required>
             </div>
             <div class="form-group">
-                <label>Danh mục mặt hàng:</label>
+                <label>Danh mục phân loại:</label>
                 <select name="category_id" class="form-control" required>
-                    <option value="">-- Chọn danh mục --</option>
-                    <?php foreach ($categories as $cate): ?>
-                        <option value="<?php echo $cate['category_id']; ?>"><?php echo htmlspecialchars($cate['category_name']); ?></option>
+                    <option value="">-- Chọn một danh mục --</option>
+                    <?php foreach($categories_list as $cat): ?>
+                        <option value="<?php echo $cat['category_id']; ?>"><?php echo htmlspecialchars($cat['category_name']); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -202,19 +252,17 @@ $result = $conn->query($sql);
                 <label>Giá bán (VNĐ):</label>
                 <input type="number" name="price" class="form-control" placeholder="Ví dụ: 35000" required>
             </div>
-            
             <div class="form-group">
-                <label>Hình ảnh sản phẩm:</label>
+                <label>Ảnh sản phẩm (Để lưu trữ ra trang chủ):</label>
                 <input type="file" name="product_image" class="form-control" accept="image/*">
             </div>
-
             <div class="form-group">
-                <label>Mô tả ngắn:</label>
-                <textarea name="description" class="form-control" rows="3" placeholder="Vị béo ngậy ngon tuyệt..."></textarea>
+                <label>Mô tả chi tiết:</label>
+                <textarea name="description" class="form-control" placeholder="Mô tả hương vị..."></textarea>
             </div>
             <div class="modal-buttons">
-                <button type="button" class="btn btn-close" onclick="closeModal('addProductModal')">Hủy bỏ</button>
-                <button type="submit" name="add_product" class="btn btn-save">Lưu Lại</button>
+                <button type="button" class="btn" style="background:#edf2f7; color:#4a5568;" onclick="closeModal('addProductModal')">Hủy bỏ</button>
+                <button type="submit" name="add_product" class="btn" style="background: #ff4d6d; color:white;">Lưu Lại</button>
             </div>
         </form>
     </div>
@@ -223,41 +271,44 @@ $result = $conn->query($sql);
 <div id="editProductModal" class="modal">
     <div class="modal-content">
         <div class="modal-title">Chỉnh Sửa Sản Phẩm</div>
-        <form action="admin.php" method="POST">
+        <form action="admin.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="product_id" id="edit_product_id">
             <div class="form-group">
-                <label>Tên món ăn / thức uống:</label>
+                <label>Tên món ăn / Thức uống:</label>
                 <input type="text" name="product_name" id="edit_product_name" class="form-control" required>
             </div>
             <div class="form-group">
-                <label>Danh mục mặt hàng:</label>
+                <label>Danh mục phân loại:</label>
                 <select name="category_id" id="edit_category_id" class="form-control" required>
-                    <?php foreach ($categories as $cate): ?>
-                        <option value="<?php echo $cate['category_id']; ?>"><?php echo htmlspecialchars($cate['category_name']); ?></option>
+                    <?php foreach($categories_list as $cat): ?>
+                        <option value="<?php echo $cat['category_id']; ?>"><?php echo htmlspecialchars($cat['category_name']); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group">
-                <label>Giá bán (VNĐ):</label>
+                <label>Giá bán mới (VNĐ):</label>
                 <input type="number" name="price" id="edit_price" class="form-control" required>
             </div>
             <div class="form-group">
-                <label>Mô tả ngắn:</label>
-                <textarea name="description" id="edit_description" class="form-control" rows="3"></textarea>
+                <label>Thay đổi ảnh mới (Để trống nếu giữ nguyên ảnh cũ):</label>
+                <input type="file" name="product_image" class="form-control" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label>Mô tả sản phẩm:</label>
+                <textarea name="description" id="edit_description" class="form-control"></textarea>
             </div>
             <div class="modal-buttons">
-                <button type="button" class="btn btn-close" onclick="closeModal('editProductModal')">Hủy bỏ</button>
-                <button type="submit" name="edit_product" class="btn btn-save">Cập Nhật</button>
+                <button type="button" class="btn" style="background:#edf2f7; color:#4a5568;" onclick="closeModal('editProductModal')">Hủy bỏ</button>
+                <button type="submit" name="edit_product" class="btn" style="background: #ff4d6d; color:white;">Cập Nhật</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    function openAddModal() {
-        document.getElementById('addProductModal').style.display = 'flex';
-    }
-    
+    function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
+    function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+
     function openEditModal(id, name, category_id, price, description) {
         document.getElementById('edit_product_id').value = id;
         document.getElementById('edit_product_name').value = name;
@@ -267,20 +318,17 @@ $result = $conn->query($sql);
         document.getElementById('editProductModal').style.display = 'flex';
     }
 
-    function closeModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
-
     function confirmDelete(id, name) {
-        if (confirm("Bạn có chắc chắn muốn xóa món \"" + name + "\" khỏi thực đơn không?")) {
+        if (confirm("Bạn có chắc chắn muốn xóa món \"" + name + "\"?")) {
             window.location.href = "admin.php?delete_id=" + id;
         }
     }
 
     window.onclick = function(event) {
-        if (event.target.classList.contains('modal')) {
-            event.target.style.display = 'none';
-        }
+        let addModal = document.getElementById('addProductModal');
+        let editModal = document.getElementById('editProductModal');
+        if (event.target == addModal) addModal.style.display = 'none';
+        if (event.target == editModal) editModal.style.display = 'none';
     }
 </script>
 
