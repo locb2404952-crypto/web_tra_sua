@@ -2,6 +2,19 @@
 // 1. Nhúng file kết nối database  
 require_once 'db-connect.php';
 
+// ==========================================
+// [NHIỆM VỤ CỦA CỎN] - XỬ LÝ ĐỔI TRẠNG THÁI ĐƠN HÀNG
+// ==========================================
+if (isset($_POST['update_status'])) {
+    $order_id = intval($_POST['order_id']);
+    $new_status = mysqli_real_escape_string($conn, $_POST['status']);
+    
+    $sql_update_status = "UPDATE orders SET status = '$new_status' WHERE order_id = $order_id";
+    mysqli_query($conn, $sql_update_status);
+    header("Location: admin.php");
+    exit();
+}
+
 // 2. XỬ LÝ CHỨC NĂNG: THÊM MÓN MỚI 
 if (isset($_POST['add_product'])) {
     $product_name = mysqli_real_escape_string($conn, $_POST['product_name']);
@@ -42,7 +55,8 @@ if (isset($_GET['delete_id'])) {
     header("Location: admin.php");
     exit();
 } 
-// 4. XỬ LÝ CHỨC NĂNG: SỬA MÓN (BAO GỒM ĐỔI ẢNH LƯU VÀO IMAGES)
+
+// 4. XỬ LÝ CHỨC NĂNG: SỬA MÓN
 if (isset($_POST['edit_product'])) {
     $product_id = intval($_POST['product_id']);
     $product_name = mysqli_real_escape_string($conn, $_POST['product_name']);
@@ -91,6 +105,27 @@ $categories_list = [];
 while($cat = mysqli_fetch_assoc($result_cates)) {
     $categories_list[] = $cat;
 }
+
+// ==========================================
+// [NHIỆM VỤ CỦA CỎN] - CÂU LỆNH SELECT JOIN ĐỂ LẤY ĐƠN HÀNG
+// ==========================================
+$sql_orders = "SELECT 
+            orders.order_id, 
+            users.full_name, 
+            products.product_name, 
+            order_items.quantity, 
+            order_items.sugar_level, 
+            order_items.ice_level, 
+            order_items.topping_note, 
+            orders.total_amount, 
+            orders.status, 
+            orders.created_at
+        FROM orders
+        JOIN users ON orders.user_id = users.user_id
+        JOIN order_items ON orders.order_id = order_items.order_id
+        JOIN products ON order_items.product_id = products.product_id
+        ORDER BY orders.created_at DESC";
+$result_orders = mysqli_query($conn, $sql_orders);
 ?>
 
 <!DOCTYPE html>
@@ -129,6 +164,15 @@ while($cat = mysqli_fetch_assoc($result_cates)) {
         }
         .header-admin p { color: #718096; font-size: 14px; font-weight: 500; }
         
+        .section-title {
+            font-size: 22px;
+            color: #ff4d6d;
+            margin: 40px 0 20px 0;
+            font-weight: 700;
+            border-left: 5px solid #ff4d6d;
+            padding-left: 10px;
+        }
+
         .btn-trigger-add {
             background: linear-gradient(90deg, #ff4d6d, #ff758f);
             color: white; padding: 12px 24px; border: none; border-radius: 12px;
@@ -137,13 +181,13 @@ while($cat = mysqli_fetch_assoc($result_cates)) {
         }
         .btn-trigger-add:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255, 77, 109, 0.4); }
 
-        .table-wrapper { width: 100%; border-radius: 16px; overflow: hidden; border: 1px solid #ffe5ec; }
+        .table-wrapper { width: 100%; border-radius: 16px; overflow: hidden; border: 1px solid #ffe5ec; margin-bottom: 20px; }
         .product-table { width: 100%; border-collapse: collapse; background: #fff; text-align: left; }
         .product-table th { background: linear-gradient(90deg, #ff758f 0%, #ff8da1 100%); color: white; font-weight: 600; padding: 18px 24px; font-size: 14px; text-transform: uppercase; }
         .product-table td { padding: 16px 24px; border-bottom: 1px solid #ffe5ec; font-size: 15px; vertical-align: middle; }
         .product-table tbody tr:hover { background-color: #fff8f9; }
         
-        .product-info { display: block; } /* Đổi từ flex sang block để tối ưu hiển thị chữ */
+        .product-info { display: block; } 
         .product-name-txt { font-weight: 600; color: #1a202c; font-size: 16px; }
         .product-desc-txt { font-size: 13px; color: #718096; margin-top: 4px; line-height: 1.4; }
         .stt-num { font-weight: 700; color: #ff758f; text-align: center; }
@@ -156,6 +200,16 @@ while($cat = mysqli_fetch_assoc($result_cates)) {
         .btn-edit:hover { background-color: #ff4d6d; color: white; }
         .btn-delete { background-color: #fff5f5; color: #e53e3e; border: 1px solid #feb2b2; }
         .btn-delete:hover { background-color: #e53e3e; color: white; }
+
+        /* Style trạng thái đơn hàng của Cỏn */
+        .status-select { padding: 6px 10px; border-radius: 8px; border: 1px solid #ffb3c1; font-size: 13px; font-weight: 500; outline: none; }
+        .btn-status-save { background: #ff4d6d; color: white; padding: 6px 12px; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 600; }
+        .status-badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-confirmed { background: #cce5ff; color: #004085; }
+        .status-shipping { background: #e2e3e5; color: #383d41; }
+        .status-delivered { background: #d4edda; color: #155724; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
 
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
@@ -181,6 +235,7 @@ while($cat = mysqli_fetch_assoc($result_cates)) {
         <p>Bảng chỉnh sửa và cập nhật thực đơn quán trà sữa Homie</p>
     </div>
 
+    <div class="section-title">🍔 QUẢN LÝ MENU SẢN PHẨM</div>
     <button class="btn-trigger-add" onclick="openModal('addProductModal')">
         + Thêm Món Mới Vào Menu
     </button>
@@ -224,11 +279,78 @@ while($cat = mysqli_fetch_assoc($result_cates)) {
                 } else {
                     echo "<tr><td colspan='5' style='text-align:center; padding: 30px; color: #a0aec0;'>Chưa có món ăn nào.</td></tr>";
                 }
-                mysqli_close($conn);
                 ?>
             </tbody>
         </table>
     </div>
+
+    <div class="section-title">📋 QUẢN LÝ ĐƠN HÀNG KHÁCH ĐẶT</div>
+    <div class="table-wrapper">
+        <table class="product-table">
+            <thead>
+                <tr>
+                    <th style="width: 8%; text-align: center;">Mã Đơn</th>
+                    <th style="width: 15%;">Khách Hàng</th>
+                    <th style="width: 25%;">Chi Tiết Món Ăn</th>
+                    <th style="width: 15%;">Tùy Chọn Khác</th>
+                    <th style="width: 12%;">Tổng Tiền</th>
+                    <th style="width: 10%;">Trạng Thái</th>
+                    <th style="width: 15%; text-align: center;">Xử Lý Đơn</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                if ($result_orders && mysqli_num_rows($result_orders) > 0) {
+                    while($order = mysqli_fetch_assoc($result_orders)) {
+                        ?>
+                        <tr>
+                            <td class="stt-num">#<?php echo $order['order_id']; ?></td>
+                            <td style="font-weight:600;"><?php echo htmlspecialchars($order['full_name']); ?></td>
+                            <td>
+                                <span style="font-weight:600;"><?php echo htmlspecialchars($order['product_name']); ?></span> 
+                                <span style="color:#ff4d6d; font-weight:700;">x<?php echo $order['quantity']; ?></span>
+                            </td>
+                            <td style="font-size: 13px; color:#718096;">
+                                Đường: <?php echo $order['sugar_level']; ?>% | Đá: <?php echo $order['ice_level']; ?>%<br>
+                                <small>Topping: <?php echo $order['topping_note'] ? htmlspecialchars($order['topping_note']) : 'Không'; ?></small>
+                            </td>
+                            <td class="product-price"><?php echo number_format($order['total_amount'], 0, ',', '.'); ?>đ</td>
+                            <td>
+                                <span class="status-badge status-<?php echo $order['status']; ?>">
+                                    <?php 
+                                        if($order['status'] == 'pending') echo 'Chờ duyệt';
+                                        if($order['status'] == 'confirmed') echo 'Đã nhận';
+                                        if($order['status'] == 'shipping') echo 'Đang giao';
+                                        if($order['status'] == 'delivered') echo 'Đã giao';
+                                        if($order['status'] == 'cancelled') echo 'Đã hủy';
+                                    ?>
+                                </span>
+                            </td>
+                            <td>
+                                <form action="admin.php" method="POST" style="display:flex; gap: 5px; justify-content:center;">
+                                    <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
+                                    <select name="status" class="status-select">
+                                        <option value="pending" <?php if($order['status']=='pending') echo 'selected'; ?>>Chờ duyệt</option>
+                                        <option value="confirmed" <?php if($order['status']=='confirmed') echo 'selected'; ?>>Đã nhận đơn</option>
+                                        <option value="shipping" <?php if($order['status']=='shipping') echo 'selected'; ?>>Đang giao</option>
+                                        <option value="delivered" <?php if($order['status']=='delivered') echo 'selected'; ?>>Đã giao xong</option>
+                                        <option value="cancelled" <?php if($order['status']=='cancelled') echo 'selected'; ?>>Hủy đơn</option>
+                                    </select>
+                                    <button type="submit" name="update_status" class="btn-status-save">Lưu</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <?php
+                    }
+                } else {
+                    echo "<tr><td colspan='7' style='text-align:center; padding: 30px; color: #a0aec0;'>Chưa có đơn hàng nào được đặt.</td></tr>";
+                }
+                mysqli_close($conn); // Đóng kết nối ở cuối file
+                ?>
+            </tbody>
+        </table>
+    </div>
+
 </div>
 
 <div id="addProductModal" class="modal">
