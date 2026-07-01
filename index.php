@@ -9,18 +9,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
     $ten_khach = mysqli_real_escape_string($conn, $_POST['khach_ten']);
     $sdt = mysqli_real_escape_string($conn, $_POST['khach_sdt']);
     
-    // Kiểm tra xem khách có bỏ trống ô nào không
-    if (empty($ten_khach) || empty($sdt)) {
+    // --- TUẦN 3: Hứng thêm dữ liệu món ăn từ form giỏ hàng của Nhat Huy ---
+    $product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+    $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
+    $price = isset($_POST['price']) ? floatval($_POST['price']) : 0.0;
+
+    // Kiểm tra xem khách có bỏ trống ô nào không hoặc chưa chọn món
+    if (empty($ten_khach) || empty($sdt) || $product_id == 0) {
         $thong_bao = "vui_long_nhap_du";
     } else {
-        // 2. Viết câu lệnh SQL để chèn dữ liệu vào bảng orders của Lộc
-        // Mặc định tổng tiền (total_amount) tạm thời để 0đ hoặc cập nhật sau ở w3
+        // --- TUẦN 3: Tính toán tổng tiền thật ---
+        $total_amount = $price * $quantity;
+
+        // 2. Viết câu lệnh SQL để chèn dữ liệu vào bảng orders
+        // Đã thay số 0 thành biến $total_amount tiền thật
         $sql_insert_order = "INSERT INTO orders (user_id, total_amount, status) 
-                             VALUES (1, 0, 'pending')";
+                             VALUES (1, '$total_amount', 'pending')";
         
         // 3. Chạy câu lệnh và kiểm tra kết quả
         if ($conn->query($sql_insert_order) === TRUE) {
-            $thong_bao = "thanh_cong";
+            // --- TUẦN 3: Lấy ID của đơn hàng vừa tạo tự động để lưu chi tiết món ---
+            $order_id = $conn->insert_id;
+
+            // 4. Viết lệnh INSERT vào bảng order_items (Chi tiết đơn hàng)
+            $sql_insert_item = "INSERT INTO order_items (order_id, product_id, quantity, price) 
+                                VALUES ('$order_id', '$product_id', '$quantity', '$price')";
+            
+            // Chạy lệnh lưu chi tiết món
+            if ($conn->query($sql_insert_item) === TRUE) {
+                $thong_bao = "thanh_cong";
+            } else {
+                $thong_bao = "loi_luu_chi_tiet";
+            }
         } else {
             $thong_bao = "that_bai";
         }
@@ -128,7 +148,7 @@ if ($result_products && $result_products->num_rows > 0) {
                             </div>
                             <div class="product-footer">
                                 <span class="product-price"><?php echo number_format($product['price'], 0, ',', '.'); ?>đ</span>
-                                <button class="btn-order" onclick="moForm()">Đặt món</button>
+                                <button class="btn-order" onclick="moForm(<?php echo $product['product_id']; ?>, <?php echo $product['price']; ?>)">Đặt món</button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -145,6 +165,10 @@ if ($result_products && $result_products->num_rows > 0) {
         <h3 style="margin-top: 0; margin-bottom: 15px; color: #333;">Thông Tin Đặt Hàng</h3>
 
         <form id="formDatHang" action="" method="POST">
+            <!-- Tạo ra các ô lưu trữ dữ liệu tạm thời (Mã món ăn, Giá tiền, Số lượng) nằm ẩn bên trong Form đặt hàng. Khi khách hàng bấm xác nhận, các dữ liệu ẩn này sẽ được đóng gói chung với Họ tên, SĐT để gửi lên cho Backend (PHP) xử lý tính tiền thật -->
+            <input type="hidden" id="modalProductId" name="product_id" value="0">
+            <input type="hidden" id="modalPrice" name="price" value="0.0">
+            <input type="hidden" id="modalQuantity" name="quantity" value="1">
             <div style="margin-bottom: 16px;">
                 <label style="display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.9rem;">Họ và tên:</label>
                 <input type="text" id="khachHangTen" name="khach_ten" placeholder="Nhập họ và tên của bạn" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;" required>
@@ -164,8 +188,14 @@ if ($result_products && $result_products->num_rows > 0) {
 </div>
 
 <script>
-    // moForm(): Tìm đến cái hộp thoại bằng ID và đổi display thành flex để nó hiện lên màn hình
-function moForm() {
+    // Khi khách bấm nút Đặt món, hàm này sẽ lấy Mã món và Giá tiền từ nút bấm đó, tự động điền (gán giá trị) vào các ô nhập liệu ẩn bên trong Form rồi mới mở cái khung nhập thông tin lên cho khách.
+function moForm(productId, price) {
+    if(productId && price) {
+        // Tự động điền ID và Giá bốc được từ nút bấm vào 2 ô ẩn trong Form
+        document.getElementById('modalProductId').value = productId;
+        document.getElementById('modalPrice').value = price;
+    }
+    // Mở khung điền thông tin đặt hàng lên
     document.getElementById('orderModal').style.display = 'flex';
 }
    // dongForm(): Tìm đến hộp thoại bằng ID và đổi display về lại none để giấu nó đi
