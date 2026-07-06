@@ -107,11 +107,13 @@ while($cat = mysqli_fetch_assoc($result_cates)) {
 }
 
 // ==========================================
-// [NHIỆM VỤ CỦA CỎN] - CÂU LỆNH SELECT JOIN ĐỂ LẤY ĐƠN HÀNG
+// [NHIỆM VỤ CỦA CỎN] - ĐÃ THAY ĐỔI ĐỂ LẤY 3 CỘT MỚI: customer_name, phone, address
 // ==========================================
 $sql_orders = "SELECT 
             orders.order_id, 
-            users.full_name, 
+            orders.customer_name, 
+            orders.phone, 
+            orders.address, 
             products.product_name, 
             order_items.quantity, 
             order_items.sugar_level, 
@@ -121,7 +123,6 @@ $sql_orders = "SELECT
             orders.status, 
             orders.created_at
         FROM orders
-        JOIN users ON orders.user_id = users.user_id
         JOIN order_items ON orders.order_id = order_items.order_id
         JOIN products ON order_items.product_id = products.product_id
         ORDER BY orders.created_at DESC";
@@ -201,7 +202,7 @@ $result_orders = mysqli_query($conn, $sql_orders);
         .btn-delete { background-color: #fff5f5; color: #e53e3e; border: 1px solid #feb2b2; }
         .btn-delete:hover { background-color: #e53e3e; color: white; }
 
-        /* Style trạng thái đơn hàng của Cỏn */
+        /* Style trạng thái đơn hàng */
         .status-select { padding: 6px 10px; border-radius: 8px; border: 1px solid #ffb3c1; font-size: 13px; font-weight: 500; outline: none; }
         .btn-status-save { background: #ff4d6d; color: white; padding: 6px 12px; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 600; }
         .status-badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
@@ -290,12 +291,12 @@ $result_orders = mysqli_query($conn, $sql_orders);
             <thead>
                 <tr>
                     <th style="width: 8%; text-align: center;">Mã Đơn</th>
-                    <th style="width: 15%;">Khách Hàng</th>
-                    <th style="width: 25%;">Chi Tiết Món Ăn</th>
+                    <th style="width: 22%;">Thông tin Người Nhận</th>
+                    <th style="width: 23%;">Chi Tiết Món Ăn</th>
                     <th style="width: 15%;">Tùy Chọn Khác</th>
                     <th style="width: 12%;">Tổng Tiền</th>
                     <th style="width: 10%;">Trạng Thái</th>
-                    <th style="width: 15%; text-align: center;">Xử Lý Đơn</th>
+                    <th style="width: 10%; text-align: center;">Xử Lý Đơn</th>
                 </tr>
             </thead>
             <tbody>
@@ -305,7 +306,11 @@ $result_orders = mysqli_query($conn, $sql_orders);
                         ?>
                         <tr>
                             <td class="stt-num">#<?php echo $order['order_id']; ?></td>
-                            <td style="font-weight:600;"><?php echo htmlspecialchars($order['full_name']); ?></td>
+                            <td>
+                                <strong style="color: #1a202c;"><?php echo htmlspecialchars($order['customer_name'] ? $order['customer_name'] : 'Chưa nhập'); ?></strong><br>
+                                <span style="font-size: 13px; color: #4a5568;">📞 SĐT: <?php echo htmlspecialchars($order['phone'] ? $order['phone'] : 'Chưa nhập'); ?></span><br>
+                                <span style="font-size: 13px; color: #718096;">📍 ĐC: <?php echo htmlspecialchars($order['address'] ? $order['address'] : 'Chưa nhập'); ?></span>
+                            </td>
                             <td>
                                 <span style="font-weight:600;"><?php echo htmlspecialchars($order['product_name']); ?></span> 
                                 <span style="color:#ff4d6d; font-weight:700;">x<?php echo $order['quantity']; ?></span>
@@ -345,7 +350,7 @@ $result_orders = mysqli_query($conn, $sql_orders);
                 } else {
                     echo "<tr><td colspan='7' style='text-align:center; padding: 30px; color: #a0aec0;'>Chưa có đơn hàng nào được đặt.</td></tr>";
                 }
-                mysqli_close($conn); // Đóng kết nối ở cuối file
+                mysqli_close($conn); 
                 ?>
             </tbody>
         </table>
