@@ -5,17 +5,17 @@ require_once 'db-connect.php';
 $thong_bao = ""; // Biến lưu trạng thái hiển thị thông báo
 
 // ========================================================
-// XỬ LÝ KHI KHÁCH HÀNG BẤM NÚT "XÁC NHẬN ĐẶT HÀNG" (FORM SUBMIT NHIỀU MÓN)
+// XỬ LÝ KHI KHÁCH HÀNG BẤM NÚT "XÁC NHẬN ĐẶT HÀNG" (FORM SUBMIT NHIỀU MÓN) Nhat Huy
 // ========================================================
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
     $ten_khach = mysqli_real_escape_string($conn, $_POST['khach_ten']);
     $sdt = mysqli_real_escape_string($conn, $_POST['khach_sdt']);
-    
+    $diachi = mysqli_real_escape_string($conn, $_POST['khach_diachi']);
     // Nhận chuỗi JSON chứa danh sách tất cả các món ăn trong giỏ hàng
     $cart_data_json = $_POST['cart_data'];
     $cart_items = json_decode($cart_data_json, true);
 
-    if (empty($ten_khach) || empty($sdt) || empty($cart_items)) {
+    if (empty($ten_khach) || empty($sdt) || empty($cart_items) ||empty($diachi)) {
         $thong_bao = "vui_long_nhap_du";
     } else {
         // 1. Tính toán tổng tiền thực tế của toàn bộ đơn hàng
@@ -28,8 +28,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
         $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 2;
 
         // Bước A: Chèn thông tin tổng quan vào bảng orders
-        $sql_order = "INSERT INTO orders (user_id, total_amount, status) VALUES ($user_id, $total_order_amount, 'pending')";
-        
+        $sql_order = "INSERT INTO orders (user_id, total_amount, customer_name, phone, address, status) 
+                      VALUES ($user_id, $total_order_amount, '$ten_khach', '$sdt', '$diachi', 'pending')";
         if (mysqli_query($conn, $sql_order)) {
             // Lấy ra mã order_id tự động tăng vừa chèn ở trên để làm khóa ngoại
             $order_id = mysqli_insert_id($conn);
@@ -223,11 +223,12 @@ $result_categories = mysqli_query($conn, $sql_categories);
 </div>
 
 <header>
-    <h1>🧋 Trà Sữa Homie 🧋</h1>
-    <p>Thơm ngon từng giọt - Đậm vị yêu thương</p>
+    <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
+        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
+        
+        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> </div>
     
-    <div class="auth-buttons">
-        <?php if(isset($_SESSION['username'])): ?>
+    <div class="auth-buttons"> <?php if(isset($_SESSION['username'])): ?>
             <span><i class="fa-solid fa-user"></i> Xin chào, <?= htmlspecialchars($_SESSION['username']) ?>!</span>
             <a href="dang-xuat.php"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
         <?php else: ?>
@@ -350,6 +351,11 @@ $result_categories = mysqli_query($conn, $sql_categories);
             <div class="form-group">
                 <label>Số Điện Thoại <span style="color:red;">*</span></label>
                 <input type="text" name="khach_sdt" class="form-control" required placeholder="Nhập số điện thoại liên hệ">
+            </div>
+
+            <div class="form-group">
+                <label>Địa Chỉ Giao Hàng <span style="color:red;">*</span></label>
+                <input type="text" name="khach_diachi" class="form-control" required placeholder="Nhập số nhà, tên đường để shipper giao hàng">
             </div>
 
             <div class="total-display-box" style="background: #fff3cd; border-color: #ffc107;">
