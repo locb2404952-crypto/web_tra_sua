@@ -126,8 +126,12 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .product-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(255, 118, 117, 0.15); }
 
         .product-image {
-            width: 100%; height: 160px; background-color: #ffeaa7;
+            width: 100%; height: 180px; background-color: #ffeaa7;
             display: flex; align-items: center; justify-content: center; font-size: 55px; user-select: none;
+            overflow: hidden;
+        }
+        .product-image img {
+            width: 100%; height: 100%; object-fit: cover;
         }
 
         .product-info { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
@@ -259,7 +263,15 @@ $result_categories = mysqli_query($conn, $sql_categories);
                 if ($cat_id == 7) $icon = "🍓";       
                 ?>
                 <div class="product-card">
-                    <div class="product-image"><?= $icon ?></div>
+                    <div class="product-image">
+                        <?php if(!empty($prod['image_url']) && file_exists($prod['image_url'])): ?>
+                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                        <?php elseif(!empty($prod['image_url']) && $prod['image_url'] != 'default.png'): ?>
+                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                        <?php else: ?>
+                            <?= $icon ?>
+                        <?php endif; ?>
+                    </div>
                     <div class="product-info">
                         <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
                         <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
