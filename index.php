@@ -1,12 +1,17 @@
 <?php
-session_start(); // Kích hoạt Session để lấy thông tin người dùng nếu đã đăng nhập từ dang-nhap.php
+session_start(); // Luôn luôn khởi động Session ở đầu file và DUY NHẤT
+
+// KIỂM TRA ĐĂNG NHẬP: Nếu chưa đăng nhập -> Đá ra trang đăng nhập
+if (!isset($_SESSION['user_id'])) {
+    echo "<script>alert('Vui lòng đăng nhập để xem giỏ hàng và đặt hàng!'); window.location.href='dang-nhap.php';</script>";
+    exit();
+}
+
+// Nhúng file kết nối database
 require_once 'db-connect.php';
 
 $thong_bao = ""; // Biến lưu trạng thái hiển thị thông báo
-
-// ========================================================
-// XỬ LÝ KHI KHÁCH HÀNG BẤM NÚT "XÁC NHẬN ĐẶT HÀNG" (FORM SUBMIT NHIỀU MÓN) Nhat Huy
-// ========================================================
+?>
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
     $ten_khach = mysqli_real_escape_string($conn, $_POST['khach_ten']);
     $sdt = mysqli_real_escape_string($conn, $_POST['khach_sdt']);
