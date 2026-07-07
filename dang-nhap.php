@@ -12,8 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($input_email) || empty($input_password)) {
         $error = "Vui lòng nhập đầy đủ email và mật khẩu!";
     } else {
-        // Truy vấn tìm tài khoản dựa trên cột 'email' khớp với bảng users của bạn
-        $stmt = $conn->prepare("SELECT user_id, email, password, full_name FROM users WHERE email = ?");
+        // Lấy thêm cột 'role' từ database để phân quyền
+        $stmt = $conn->prepare("SELECT user_id, email, password, full_name, role FROM users WHERE email = ?");
         $stmt->bind_param("s", $input_email);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -22,15 +22,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $user = $result->fetch_assoc();
             
             // KIỂM TRA MẬT KHẨU: 
-            // Vì database của bạn đang lưu chữ '123456' dạng thô, ta so sánh trực tiếp bằng dấu ==
             if ($input_password == $user['password']) {
                 
-                // ĐĂNG NHẬP THÀNH CÔNG: Lưu thông tin vào Session như yêu cầu
+                // ĐĂNG NHẬP THÀNH CÔNG: Lưu thông tin vào Session
                 $_SESSION['user_id'] = $user['user_id'];      // Mã user_id thật gửi cho Huy kết nối đơn hàng
-                $_SESSION['username'] = $user['full_name'];   // Lưu tên hiển thị (Quản Trị Viên / Nguyễn Khách Hàng)
+                $_SESSION['username'] = $user['full_name'];   // Lưu tên hiển thị 
+                $_SESSION['role'] = $user['role'];           // Quyết định quyền truy cập trang Admin
                 
-                // Chuyển hướng về trang chủ dự án của bạn
-                header("Location: index.php");
+                // Điều hướng thông minh dựa vào quyền hạn của tài khoản
+                if ($_SESSION['role'] === 'admin') {
+                    header("Location: admin.php"); // Nếu là admin thì bay thẳng vào trang quản lý
+                } else {
+                    header("Location: index.php"); // Nếu là khách thường thì về trang chủ đặt trà sữa
+                }
                 exit();
             } else {
                 $error = "Mật khẩu không chính xác!";
@@ -41,7 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
