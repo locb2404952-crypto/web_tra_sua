@@ -122,12 +122,14 @@
 
             .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; }
 
-            .product-card {
-                background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.04);
-                overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease;
-                display: flex; flex-direction: column; border: 1px solid #f1f2f6;
-            }
-            .product-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(255, 118, 117, 0.15); }
+        .product-image {
+            width: 100%; height: 180px; background-color: #ffeaa7;
+            display: flex; align-items: center; justify-content: center; font-size: 55px; user-select: none;
+            overflow: hidden;
+        }
+        .product-image img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
 
             .product-image {
                 width: 100%; height: 160px; background-color: #ffeaa7;
@@ -249,32 +251,34 @@
             $sql_products = "SELECT * FROM products WHERE category_id = $cat_id";
             $result_products = mysqli_query($conn, $sql_products);
             
-            if (mysqli_num_rows($result_products) > 0) {
-                echo '<div class="category-section">';
-                echo '<h2 class="category-title">' . htmlspecialchars($cat['category_name']) . '</h2>';
-                echo '<div class="product-grid">';
-                
-                while ($prod = mysqli_fetch_assoc($result_products)) {
-                    $icon = "🧋"; 
-                    if ($cat_id == 1) $icon = "🍟";       
-                    if ($cat_id == 2) $icon = "☕";       
-                    if ($cat_id == 4) $icon = "🍜";       
-                    if ($cat_id == 5) $icon = "🥑";       
-                    if ($cat_id == 7) $icon = "🍓";       
-                    ?>
-                    <div class="product-card">
-                        <div class="product-image"><?= $icon ?></div>
-                        <div class="product-info">
-                            <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
-                            <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
-                            <div class="product-price-action">
-                                <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
-                                <div class="action-buttons-group">
-                                    <button class="btn-select" onclick="moTuyChonMon(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">Mua</button>
-                                    <button class="btn-mini-cart" title="Thêm nhanh vào giỏ hàng" onclick="themNhanhVaoGioHang(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">
-                                        <i class="fa-solid fa-cart-plus"></i>
-                                    </button>
-                                </div>
+            while ($prod = mysqli_fetch_assoc($result_products)) {
+                $icon = "🧋"; 
+                if ($cat_id == 1) $icon = "🍟";       
+                if ($cat_id == 2) $icon = "☕";       
+                if ($cat_id == 4) $icon = "🍜";       
+                if ($cat_id == 5) $icon = "🥑";       
+                if ($cat_id == 7) $icon = "🍓";       
+                ?>
+                <div class="product-card">
+                    <div class="product-image">
+                        <?php if(!empty($prod['image_url']) && file_exists($prod['image_url'])): ?>
+                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                        <?php elseif(!empty($prod['image_url']) && $prod['image_url'] != 'default.png'): ?>
+                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                        <?php else: ?>
+                            <?= $icon ?>
+                        <?php endif; ?>
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
+                        <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
+                        <div class="product-price-action">
+                            <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
+                            <div class="action-buttons-group">
+                                <button class="btn-select" onclick="moTuyChonMon(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">Mua</button>
+                                <button class="btn-mini-cart" title="Thêm nhanh vào giỏ hàng" onclick="themNhanhVaoGioHang(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">
+                                    <i class="fa-solid fa-cart-plus"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -581,18 +585,11 @@
         if (event.target == document.getElementById('cartModal')) dongGioHang();
     }
     </script>
+<?php elseif ($thong_bao == "vui_long_nhap_du"): ?>
+    <script>alert('⚠️ Vui lòng điền đầy đủ thông tin Tên và Số điện thoại để nhận hàng!');</script>
+<?php elseif ($thong_bao == "loi_chi_tiet_don" || $thong_bao == "loi_tao_don_hang"): ?>
+    <script>alert('❌ Có lỗi hệ thống xảy ra khi lưu trữ đơn hàng. Vui lòng thử lại sau!');</script>
+<?php endif; ?>
 
-    <?php if ($thong_bao == "thanh_cong"): ?>
-        <script>
-            alert('🎉 Đặt hàng thành công! Tất cả các món ăn ông chọn kèm giá tiền đã được đồng bộ chuẩn vào hệ thống Database.');
-            globalCart = [];
-            capNhatGiaoDienGioHang();
-        </script>
-    <?php elseif ($thong_bao == "vui_long_nhap_du"): ?>
-        <script>alert('⚠️ Vui lòng điền đầy đủ thông tin Tên và Số điện thoại để nhận hàng!');</script>
-    <?php elseif ($thong_bao == "loi_chi_tiet_don" || $thong_bao == "loi_tao_don_hang"): ?>
-        <script>alert('❌ Có lỗi hệ thống xảy ra khi lưu trữ đơn hàng. Vui lòng thử lại sau!');</script>
-    <?php endif; ?>
-
-    </body>
-    </html>
+</body>
+</html>
