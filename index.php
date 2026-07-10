@@ -77,6 +77,11 @@ $result_categories = mysqli_query($conn, $sql_categories);
     <title>Trà Sữa Homie - Thực Đơn Gọi Món</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* THÊM: Tạo hiệu ứng cuộn mượt mà khi click danh mục */
+        html {
+            scroll-behavior: smooth;
+        }
+
         :root {
             --primary-color: #ff7675;   /* Màu hồng cam san hô ngọt ngào */
             --secondary-color: #fab1a0; /* Màu cam nhạt phối hợp */
@@ -108,7 +113,9 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .auth-buttons a:hover { background-color: white; color: var(--primary-color); }
         .auth-buttons span { color: white; font-weight: bold; margin-right: 10px; }
 
-        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        /* ĐÃ CHỈNH SỬA: Thay đổi margin từ 'auto' sang '40px 0 40px 50px' để dịch nguyên trang web dạt hẳn về góc trái */
+        .container { max-width: 1340px; margin: 40px 0 40px 50px; padding: 0 20px; }
+        
         .category-section { margin-bottom: 5px; }
         .category-title {
             font-size: 24px; color: #d63031; border-bottom: 3px solid var(--primary-color);
@@ -116,7 +123,12 @@ $result_categories = mysqli_query($conn, $sql_categories);
             text-transform: uppercase; letter-spacing: 0.5px;
         }
 
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; }
+        /* ĐÃ CHỈNH SỬA: Chuyển sang grid-template-columns linh hoạt để các sản phẩm ôm gọn gàng bên cạnh menu danh mục */
+        .product-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+            gap: 25px; 
+        }
 
         .product-card {
             background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.04);
@@ -242,59 +254,69 @@ $result_categories = mysqli_query($conn, $sql_categories);
     </div>
 </header>
 
-<div class="container">
-    <?php 
-    while ($cat = mysqli_fetch_assoc($result_categories)) {
-        $cat_id = $cat['category_id'];
-        $sql_products = "SELECT * FROM products WHERE category_id = $cat_id";
-        $result_products = mysqli_query($conn, $sql_products);
-        
-        if (mysqli_num_rows($result_products) > 0) {
-            echo '<div class="category-section">';
-            echo '<h2 class="category-title">' . htmlspecialchars($cat['category_name']) . '</h2>';
-            echo '<div class="product-grid">';
+<div class="container" style="display: flex; gap: 25px; align-items: flex-start;">
+
+    <div style="flex: 0 0 230px; width: 230px; position: sticky; top: 20px; z-index: 999;">
+        <?php include 'danh-muc.php'; ?>
+    </div>
+
+    <div style="flex: 1; min-width: 0;">
+        <?php 
+        // Đã đồng bộ: Đưa con trỏ dữ liệu danh mục về vị trí 0 ban đầu
+        if ($result_categories) {
+            mysqli_data_seek($result_categories, 0);
+        }
+
+        while ($cat = mysqli_fetch_assoc($result_categories)) {
+            $cat_id = $cat['category_id'];
+            $sql_products = "SELECT * FROM products WHERE category_id = $cat_id";
+            $result_products = mysqli_query($conn, $sql_products);
             
-            while ($prod = mysqli_fetch_assoc($result_products)) {
-                $icon = "🧋"; 
-                if ($cat_id == 1) $icon = "🍟";       
-                if ($cat_id == 2) $icon = "☕";       
-                if ($cat_id == 4) $icon = "🍜";       
-                if ($cat_id == 5) $icon = "🥑";       
-                if ($cat_id == 7) $icon = "🍓";       
-                ?>
-                <div class="product-card">
-                    <div class="product-image">
-                        <?php if(!empty($prod['image_url']) && file_exists($prod['image_url'])): ?>
-                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
-                        <?php elseif(!empty($prod['image_url']) && $prod['image_url'] != 'default.png'): ?>
-                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
-                        <?php else: ?>
-                            <?= $icon ?>
-                        <?php endif; ?>
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
-                        <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
-                        <div class="product-price-action">
-                            <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
-                            <div class="action-buttons-group">
-                                <button class="btn-select" onclick="moTuyChonMon(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">Mua</button>
-                                <button class="btn-mini-cart" title="Thêm nhanh vào giỏ hàng" onclick="themNhanhVaoGioHang(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">
-                                    <i class="fa-solid fa-cart-plus"></i>
-                                </button>
+            if (mysqli_num_rows($result_products) > 0) {
+                // SỬA: Thêm ID động id="danh-muc-X" và scroll-margin-top để khi click từ menu, trang web tự trượt đến đúng vùng món ăn này cách mép trên 30px
+                echo '<div class="category-section" id="danh-muc-' . $cat_id . '" style="scroll-margin-top: 30px;">';
+                echo '<h2 class="category-title">' . htmlspecialchars($cat['category_name']) . '</h2>';
+                echo '<div class="product-grid">';
+                
+                while ($prod = mysqli_fetch_assoc($result_products)) {
+                    $icon = "🧋"; 
+                    if ($cat_id == 1) $icon = "🍟";       
+                    if ($cat_id == 2) $icon = "☕";       
+                    if ($cat_id == 4) $icon = "🍜";       
+                    if ($cat_id == 5) $icon = "🥑";       
+                    if ($cat_id == 7) $icon = "🍓";       
+                    ?>
+                    <div class="product-card">
+                        <div class="product-image">
+                            <?php if(!empty($prod['image_url']) && file_exists($prod['image_url'])): ?>
+                                <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                            <?php elseif(!empty($prod['image_url']) && $prod['image_url'] != 'default.png'): ?>
+                                <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                            <?php else: ?>
+                                <?= $icon ?>
+                            <?php endif; ?>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
+                            <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
+                            <div class="product-price-action">
+                                <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
+                                <div class="action-buttons-group">
+                                    <button class="btn-select" onclick="moTuyChonMon(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">Mua</button>
+                                    <button class="btn-mini-cart" title="Thêm nhanh vào giỏ hàng" onclick="themNhanhVaoGioHang(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">
+                                        <i class="fa-solid fa-cart-plus"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <?php
+                    <?php
+                }
+                echo '</div></div><br><br>';
             }
-            echo '</div></div><br><br>';
         }
-    }
-    ?>
-</div>
-
-<div id="optionsModal" class="modal">
+        ?>
+    </div> </div> <div id="optionsModal" class="modal">
     <div class="modal-content">
         <button class="close-btn" onclick="dongTuyChon()">&times;</button>
         <h2 id="optionTitle">Tùy Chọn Món</h2>
@@ -604,6 +626,8 @@ window.onclick = function(event) {
 <?php elseif ($thong_bao == "loi_chi_tiet_don" || $thong_bao == "loi_tao_don_hang"): ?>
     <script>alert('❌ Có lỗi hệ thống xảy ra khi lưu trữ đơn hàng. Vui lòng thử lại sau!');</script>
 <?php endif; ?>
+
+<?php include 'lien-he-noi.php'; ?>
 
 </body>
 </html>
