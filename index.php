@@ -604,6 +604,6 @@ window.onclick = function(event) {
 <?php elseif ($thong_bao == "loi_chi_tiet_don" || $thong_bao == "loi_tao_don_hang"): ?>
     <script>alert('❌ Có lỗi hệ thống xảy ra khi lưu trữ đơn hàng. Vui lòng thử lại sau!');</script>
 <?php endif; ?>
-
+<?php include 'footer.php'; ?>
 </body>
 </html>
