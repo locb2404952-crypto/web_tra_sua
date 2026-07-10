@@ -594,7 +594,7 @@ window.onclick = function(event) {
 
 <?php if ($thong_bao == "thanh_cong"): ?>
     <script>
-        alert('🎉 Đặt hàng thành công! Tất cả các món ăn ông chọn kèm giá tiền đã được đồng bộ chuẩn vào hệ thống Database.');
+        alert('🎉 Đặt hàng thành công!');
         globalCart = [];
         capNhatGiaoDienGioHang();
     </script>
