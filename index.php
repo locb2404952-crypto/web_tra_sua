@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
     $cart_data_json = $_POST['cart_data'];
     $cart_items = json_decode($cart_data_json, true);
 
-    if (empty($ten_khach) || empty($sdt) || empty($cart_items) ||empty($diachi)) {
+    if (empty($ten_khach) || empty($sdt) || empty($cart_items) || empty($diachi)) {
         $thong_bao = "vui_long_nhap_du";
     } else {
         // 1. Tính toán tổng tiền thực tế của toàn bộ đơn hàng
@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
         }
 
         // Lấy mã user_id nếu khách đã đăng nhập, nếu chưa mặc định là 2 (Khách vãng lai mẫu)
-        $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 2;
+        $user_id = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 2;
 
         // Bước A: Chèn thông tin tổng quan vào bảng orders
         $sql_order = "INSERT INTO orders (user_id, total_amount, customer_name, phone, address, status) 
@@ -129,6 +129,9 @@ $result_categories = mysqli_query($conn, $sql_categories);
             width: 100%; height: 160px; background-color: #ffeaa7;
             display: flex; align-items: center; justify-content: center; font-size: 55px; user-select: none;
         }
+        .product-image img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
 
         .product-info { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
         .product-name { font-size: 19px; font-weight: bold; margin: 0 0 8px 0; color: #2d3436; }
@@ -223,12 +226,10 @@ $result_categories = mysqli_query($conn, $sql_categories);
 </div>
 
 <header>
-    <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> 
-    <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
-        <a href="trang-chu.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
-        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-utensils"></i> Thực Đơn</a>
-        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> 
-    </div>
+    <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
+        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
+        
+        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> </div>
     
     <div class="auth-buttons"> <?php if(isset($_SESSION['username'])): ?>
             <span><i class="fa-solid fa-user"></i> Xin chào, <?= htmlspecialchars($_SESSION['username']) ?>!</span>
@@ -486,13 +487,16 @@ function tinhTienTuyChonMon() {
 
 function xacNhanThemMon() {
     let qty = parseInt(document.getElementById('opt_quantity').value);
-    let sugarValue = document.querySelector('input[name="opt_sugar"]:checked').value;
-    let iceValue = document.querySelector('input[name="opt_ice"]:checked').value;
+    let sugarValue = 100;
+    let iceValue = 100;
     let toppingNote = document.getElementById('opt_topping_note').value;
 
-    if (activeProduct.catId == 1 || activeProduct.catId == 4) {
-        sugarValue = 100;
-        iceValue = 100;
+    // Sửa lỗi: Chỉ lấy phần tử radio được check nếu danh mục đó thuộc nhóm đồ uống hiển thị form chọn
+    if (activeProduct.catId != 1 && activeProduct.catId != 4) {
+        let sugarRadio = document.querySelector('input[name="opt_sugar"]:checked');
+        let iceRadio = document.querySelector('input[name="opt_ice"]:checked');
+        if(sugarRadio) sugarValue = sugarRadio.value;
+        if(iceRadio) iceValue = iceRadio.value;
     }
 
     let itemNew = {
