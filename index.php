@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
     $cart_data_json = $_POST['cart_data'];
     $cart_items = json_decode($cart_data_json, true);
 
-    if (empty($ten_khach) || empty($sdt) || empty($cart_items) || empty($diachi)) {
+    if (empty($ten_khach) || empty($sdt) || empty($cart_items) ||empty($diachi)) {
         $thong_bao = "vui_long_nhap_du";
     } else {
         // 1. Tính toán tổng tiền thực tế của toàn bộ đơn hàng
@@ -126,7 +126,7 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .product-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(255, 118, 117, 0.15); }
 
         .product-image {
-            width: 100%; height: 180px; background-color: #ffeaa7;
+            width: 100%; height: 160px; background-color: #ffeaa7;
             display: flex; align-items: center; justify-content: center; font-size: 55px; user-select: none;
             overflow: hidden;
         }
@@ -227,10 +227,12 @@ $result_categories = mysqli_query($conn, $sql_categories);
 </div>
 
 <header>
-    <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
-        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
-        
-        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> </div>
+    <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> 
+    <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
+        <a href="trang-chu.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
+        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-utensils"></i> Thực Đơn</a>
+        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> 
+    </div>
     
     <div class="auth-buttons"> <?php if(isset($_SESSION['username'])): ?>
             <span><i class="fa-solid fa-user"></i> Xin chào, <?= htmlspecialchars($_SESSION['username']) ?>!</span>
@@ -496,16 +498,13 @@ function tinhTienTuyChonMon() {
 
 function xacNhanThemMon() {
     let qty = parseInt(document.getElementById('opt_quantity').value);
-    let sugarValue = 100;
-    let iceValue = 100;
+    let sugarValue = document.querySelector('input[name="opt_sugar"]:checked').value;
+    let iceValue = document.querySelector('input[name="opt_ice"]:checked').value;
     let toppingNote = document.getElementById('opt_topping_note').value;
 
-    // Sửa lỗi: Chỉ lấy phần tử radio được check nếu danh mục đó thuộc nhóm đồ uống hiển thị form chọn
-    if (activeProduct.catId != 1 && activeProduct.catId != 4) {
-        let sugarRadio = document.querySelector('input[name="opt_sugar"]:checked');
-        let iceRadio = document.querySelector('input[name="opt_ice"]:checked');
-        if(sugarRadio) sugarValue = sugarRadio.value;
-        if(iceRadio) iceValue = iceRadio.value;
+    if (activeProduct.catId == 1 || activeProduct.catId == 4) {
+        sugarValue = 100;
+        iceValue = 100;
     }
 
     let itemNew = {
