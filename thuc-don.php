@@ -1,41 +1,32 @@
 <?php
-session_start(); // Kích hoạt Session để lấy thông tin người dùng nếu đã đăng nhập từ dang-nhap.php
+session_start(); 
 require_once 'db-connect.php';
 
-$thong_bao = ""; // Biến lưu trạng thái hiển thị thông báo
+$thong_bao = ""; 
 
-// ========================================================
-// XỬ LÝ KHI KHÁCH HÀNG BẤM NÚT "XÁC NHẬN ĐẶT HÀNG" (FORM SUBMIT NHIỀU MÓN) Nhat Huy
-// ========================================================
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
     $ten_khach = mysqli_real_escape_string($conn, $_POST['khach_ten']);
     $sdt = mysqli_real_escape_string($conn, $_POST['khach_sdt']);
     $diachi = mysqli_real_escape_string($conn, $_POST['khach_diachi']);
-    // Nhận chuỗi JSON chứa danh sách tất cả các món ăn trong giỏ hàng
     $cart_data_json = $_POST['cart_data'];
     $cart_items = json_decode($cart_data_json, true);
 
     if (empty($ten_khach) || empty($sdt) || empty($cart_items) || empty($diachi)) {
         $thong_bao = "vui_long_nhap_du";
     } else {
-        // 1. Tính toán tổng tiền thực tế của toàn bộ đơn hàng
         $total_order_amount = 0;
         foreach ($cart_items as $item) {
             $total_order_amount += floatval($item['price']) * intval($item['quantity']);
         }
 
-        // Lấy mã user_id nếu khách đã đăng nhập, nếu chưa mặc định là 2 (Khách vãng lai mẫu)
-        $user_id = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 2;
+        $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 2;
 
-        // Bước A: Chèn thông tin tổng quan vào bảng orders
         $sql_order = "INSERT INTO orders (user_id, total_amount, customer_name, phone, address, status) 
                       VALUES ($user_id, $total_order_amount, '$ten_khach', '$sdt', '$diachi', 'pending')";
         if (mysqli_query($conn, $sql_order)) {
-            // Lấy ra mã order_id tự động tăng vừa chèn ở trên để làm khóa ngoại
             $order_id = mysqli_insert_id($conn);
             $error_flag = false;
 
-            // Bước B: Chạy vòng lặp chèn từng món ăn trong giỏ hàng vào bảng order_items
             foreach ($cart_items as $item) {
                 $product_id = intval($item['id']);
                 $quantity = intval($item['quantity']);
@@ -64,7 +55,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
     }
 }
 
-// 2. LẤY DANH SÁCH DANH MỤC SẢN PHẨM RA GIAO DIỆN
 $sql_categories = "SELECT * FROM categories";
 $result_categories = mysqli_query($conn, $sql_categories);
 ?>
@@ -78,10 +68,10 @@ $result_categories = mysqli_query($conn, $sql_categories);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #ff7675;   /* Màu hồng cam san hô ngọt ngào */
-            --secondary-color: #fab1a0; /* Màu cam nhạt phối hợp */
-            --dark-color: #2d3436;      /* Màu chữ tối */
-            --light-color: #f9f9f9;     /* Màu nền sáng */
+            --primary-color: #ff7675;   
+            --secondary-color: #fab1a0; 
+            --dark-color: #2d3436;      
+            --light-color: #f9f9f9;     
         }
 
         body {
@@ -98,6 +88,15 @@ $result_categories = mysqli_query($conn, $sql_categories);
 
         header h1 { margin: 0; font-size: 32px; letter-spacing: 1px; }
         header p { margin: 10px 0 0 0; font-size: 16px; opacity: 0.9; }
+
+        .main-menu a {
+            transition: all 0.3s ease;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .main-menu a:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
 
         .auth-buttons { position: absolute; top: 30px; right: 30px; }
         .auth-buttons a {
@@ -126,12 +125,8 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .product-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(255, 118, 117, 0.15); }
 
         .product-image {
-            width: 100%; height: 180px; background-color: #ffeaa7;
+            width: 100%; height: 160px; background-color: #ffeaa7;
             display: flex; align-items: center; justify-content: center; font-size: 55px; user-select: none;
-            overflow: hidden;
-        }
-        .product-image img {
-            width: 100%; height: 100%; object-fit: cover;
         }
 
         .product-info { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
@@ -157,7 +152,6 @@ $result_categories = mysqli_query($conn, $sql_categories);
         }
         .btn-mini-cart:hover { background-color: var(--primary-color); color: white; }
 
-        /* MODAL OPTIONS CHO TỪNG MÓN */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.55); justify-content: center; align-items: center; z-index: 9999;
@@ -201,7 +195,6 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .btn-submit { background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-huy { background-color: #eee; color: #333; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* GIAO DIỆN HIỂN THỊ DANH SÁCH MÓN ĂN TRONG GIỎ HÀNG TỔNG */
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
         .cart-item-details { display: flex; flex-direction: column; gap: 2px; }
         .cart-item-name { font-weight: bold; color: #2d3436; }
@@ -209,7 +202,6 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .cart-item-price-qty { display: flex; align-items: center; gap: 15px; }
         .btn-delete-item { color: #e74c3c; background: none; border: none; cursor: pointer; font-size: 14px; }
 
-        /* POPUP THÔNG BÁO THÊM GIỎ HÀNG CHUẨN ĐẸP */
         .toast-notification {
             position: fixed; top: 25px; left: 50%; transform: translateX(-50%) translateY(-40px);
             background-color: #2ecc71; color: white; font-weight: 600; font-size: 15px;
@@ -227,12 +219,16 @@ $result_categories = mysqli_query($conn, $sql_categories);
 </div>
 
 <header>
-    <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
-        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
-        
-        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> </div>
+    <h1>🧋 Trà Sữa Homie 🧋</h1>  
+    <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> 
+    <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
+        <a href="trang-chu.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
+        <a href="thuc-don.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-utensils"></i> Thực Đơn</a>
+        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> 
+    </div>
     
-    <div class="auth-buttons"> <?php if(isset($_SESSION['username'])): ?>
+    <div class="auth-buttons"> 
+        <?php if(isset($_SESSION['username'])): ?>
             <span><i class="fa-solid fa-user"></i> Xin chào, <?= htmlspecialchars($_SESSION['username']) ?>!</span>
             <a href="dang-xuat.php"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
         <?php else: ?>
@@ -263,15 +259,7 @@ $result_categories = mysqli_query($conn, $sql_categories);
                 if ($cat_id == 7) $icon = "🍓";       
                 ?>
                 <div class="product-card">
-                    <div class="product-image">
-                        <?php if(!empty($prod['image_url']) && file_exists($prod['image_url'])): ?>
-                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
-                        <?php elseif(!empty($prod['image_url']) && $prod['image_url'] != 'default.png'): ?>
-                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
-                        <?php else: ?>
-                            <?= $icon ?>
-                        <?php endif; ?>
-                    </div>
+                    <div class="product-image"><?= $icon ?></div>
                     <div class="product-info">
                         <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
                         <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
@@ -350,8 +338,7 @@ $result_categories = mysqli_query($conn, $sql_categories);
         <button class="close-btn" onclick="dongGioHang()">&times;</button>
         <h2>🛒 Giỏ Hàng Của Bạn</h2>
         
-        <div id="cartItemsList" style="max-height: 250px; overflow-y: auto; margin-bottom: 20px; border-bottom: 2px solid #f1f2f6; padding-bottom: 10px;">
-            </div>
+        <div id="cartItemsList" style="max-height: 250px; overflow-y: auto; margin-bottom: 20px; border-bottom: 2px solid #f1f2f6; padding-bottom: 10px;"></div>
 
         <form action="" method="POST" onsubmit="return validateCartBeforeSubmit()">
             <input type="hidden" name="cart_data" id="hidden_cart_data">
@@ -388,24 +375,23 @@ $result_categories = mysqli_query($conn, $sql_categories);
 </div>
 
 <script>
-let globalCart = []; // Mảng lưu trữ các món đã chọn trong giỏ hàng
-let activeProduct = {}; // Lưu thông tin tạm của món đang chọn cấu hình khi nhấn chữ "Mua"
+// KHỞI TẠO GIỎ HÀNG TỪ SESSIONSTORAGE ĐỂ ĐỒNG BỘ GIỮA CÁC TRANG
+let globalCart = JSON.parse(sessionStorage.getItem('homie_cart')) || []; 
+let activeProduct = {}; 
 
-// HÀM HIỂN THỊ POPUP THÔNG BÁO CHUẨN ĐẸP NHƯ ẢNH CHỤP
+// Chạy cập nhật giao diện giỏ hàng ngay khi vừa load trang
+document.addEventListener("DOMContentLoaded", function() {
+    capNhatGiaoDienGioHang();
+});
+
 function showToast(message) {
     let toast = document.getElementById('toastNotify');
     document.getElementById('toastMessage').innerText = message;
     toast.classList.add('show');
-    
-    // Tự động giấu sau 2.5 giây
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 2500);
+    setTimeout(() => { toast.classList.remove('show'); }, 2500);
 }
 
-// HÀM KIỂM TRA GHI NHỚ VÀ SO SÁNH TÙY CHỌN ĐƯỜNG ĐÁ ĐỂ QUYẾT ĐỊNH GỘP HOẶC TÁCH DÒNG
 function themMonVaoMangGioHang(newProduct) {
-    // So sánh khớp toàn bộ: ID sản phẩm + Mức đường + Mức đá + Ghi chú topping
     let existingIndex = globalCart.findIndex(item => 
         item.id === newProduct.id && 
         item.sugar === newProduct.sugar && 
@@ -414,45 +400,26 @@ function themMonVaoMangGioHang(newProduct) {
     );
 
     if (existingIndex > -1) {
-        // Nếu trùng khít toàn bộ tùy chọn -> Tiến hành cộng dồn số lượng lên dòng đó
         globalCart[existingIndex].quantity += newProduct.quantity;
     } else {
-        // Nếu tùy chọn khác nhau -> Lưu thành một dòng riêng biệt trong giỏ hàng lớn
         globalCart.push(newProduct);
     }
+    // Lưu lại vào sessionStorage sau khi thay đổi mảng
+    sessionStorage.setItem('homie_cart', JSON.stringify(globalCart));
 }
 
-// HÀM 1: KHI CLICK BIỂU TƯỢNG GIỎ HÀNG NHỎ - CHỈ BẮN POPUP THÔNG BÁO, KHÔNG BUNG MODAL LỚN LÊN
 function themNhanhVaoGioHang(productId, productName, price, categoryId) {
-    let sugarVal = 100;
-    let iceVal = 100;
-
-    let itemNew = {
-        id: productId,
-        name: productName,
-        price: parseFloat(price),
-        quantity: 1,
-        sugar: sugarVal,
-        ice: iceVal,
-        topping: ""
-    };
-
-    // Đẩy vào hàm xử lý thông minh để ghi nhớ tùy chọn
+    let itemNew = { id: productId, name: productName, price: parseFloat(price), quantity: 1, sugar: 100, ice: 100, topping: "" };
     themMonVaoMangGioHang(itemNew);
     capNhatGiaoDienGioHang();
-    
-    // Chỉ bắn thông báo nổi lên màn hình (như ảnh), giữ giao diện sạch sẽ cho khách lướt tiếp
     showToast("✨ Đã thêm '" + productName + "' vào giỏ hàng thành công!");
 }
 
-// HÀM 2: KHI CLICK CHỮ "MUA" - BUNG MODAL CẤU HÌNH ĐƯỜNG ĐÁ, SAU ĐÓ BUNG TIẾP GIỎ HÀNG ĐỂ KIỂM TRA ĐƠN
 function moTuyChonMon(productId, productName, price, categoryId) {
     activeProduct = { id: productId, name: productName, price: parseFloat(price), catId: categoryId };
-    
     document.getElementById('optionTitle').innerText = productName;
     document.getElementById('opt_quantity').value = 1;
     document.getElementById('opt_topping_note').value = "";
-    
     document.getElementById('s100').checked = true;
     document.getElementById('i100').checked = true;
 
@@ -469,65 +436,31 @@ function moTuyChonMon(productId, productName, price, categoryId) {
         toppingLabel.innerText = "Topping yêu cầu thêm:";
         toppingInput.placeholder = "Ví dụ: Thêm trân châu hoàng kim, thạch...";
     }
-
     tinhTienTuyChonMon();
     document.getElementById('optionsModal').style.display = 'flex';
 }
 
 function dongTuyChon() { document.getElementById('optionsModal').style.display = 'none'; }
-
-function tangQty() {
-    let input = document.getElementById('opt_quantity');
-    input.value = parseInt(input.value) + 1;
-    tinhTienTuyChonMon();
-}
-function giamQty() {
-    let input = document.getElementById('opt_quantity');
-    if (parseInt(input.value) > 1) {
-        input.value = parseInt(input.value) - 1;
-        tinhTienTuyChonMon();
-    }
-}
-function tinhTienTuyChonMon() {
-    let qty = parseInt(document.getElementById('opt_quantity').value);
-    let total = activeProduct.price * qty;
-    document.getElementById('opt_display_total').innerText = total.toLocaleString('vi-VN') + 'đ';
-}
+function tangQty() { document.getElementById('opt_quantity').value = parseInt(document.getElementById('opt_quantity').value) + 1; tinhTienTuyChonMon(); }
+function giamQty() { if (parseInt(document.getElementById('opt_quantity').value) > 1) { document.getElementById('opt_quantity').value = parseInt(document.getElementById('opt_quantity').value) - 1; tinhTienTuyChonMon(); } }
+function tinhTienTuyChonMon() { document.getElementById('opt_display_total').innerText = (activeProduct.price * parseInt(document.getElementById('opt_quantity').value)).toLocaleString('vi-VN') + 'đ'; }
 
 function xacNhanThemMon() {
     let qty = parseInt(document.getElementById('opt_quantity').value);
-    let sugarValue = 100;
-    let iceValue = 100;
+    let sugarValue = document.querySelector('input[name="opt_sugar"]:checked').value;
+    let iceValue = document.querySelector('input[name="opt_ice"]:checked').value;
     let toppingNote = document.getElementById('opt_topping_note').value;
 
-    // Sửa lỗi: Chỉ lấy phần tử radio được check nếu danh mục đó thuộc nhóm đồ uống hiển thị form chọn
-    if (activeProduct.catId != 1 && activeProduct.catId != 4) {
-        let sugarRadio = document.querySelector('input[name="opt_sugar"]:checked');
-        let iceRadio = document.querySelector('input[name="opt_ice"]:checked');
-        if(sugarRadio) sugarValue = sugarRadio.value;
-        if(iceRadio) iceValue = iceRadio.value;
-    }
+    if (activeProduct.catId == 1 || activeProduct.catId == 4) { sugarValue = 100; iceValue = 100; }
+    let itemNew = { id: activeProduct.id, name: activeProduct.name, price: activeProduct.price, quantity: qty, sugar: sugarValue, ice: iceValue, topping: toppingNote };
 
-    let itemNew = {
-        id: activeProduct.id,
-        name: activeProduct.name,
-        price: activeProduct.price,
-        quantity: qty,
-        sugar: sugarValue,
-        ice: iceValue,
-        topping: toppingNote
-    };
-
-    // Chạy qua thuật toán xử lý để tự động nhận diện gộp/tách dòng thông minh
     themMonVaoMangGioHang(itemNew);
-
     capNhatGiaoDienGioHang();
     dongTuyChon();
-    document.getElementById('cartModal').style.display = 'flex'; // Riêng nút Mua này thì bung Modal lớn lên cho khách coi lại toàn bộ giỏ hàng
+    document.getElementById('cartModal').style.display = 'flex'; 
 }
 
 function capNhatGiaoDienGioHang() {
-    // Tính tổng số ly thực tế dựa trên thuộc tính quantity để hiển thị lên vòng tròn đỏ dưới góc
     let totalItemsCount = globalCart.reduce((sum, item) => sum + item.quantity, 0);
     let countSpan = document.getElementById('cart-count');
     countSpan.innerText = totalItemsCount;
@@ -540,7 +473,6 @@ function capNhatGiaoDienGioHang() {
     globalCart.forEach((item, index) => {
         let itemTotal = item.price * item.quantity;
         globalTotal += itemTotal;
-
         let subText = `SL: ${item.quantity} x ${item.price.toLocaleString('vi-VN')}đ`;
         if (item.sugar != 100 || item.ice != 100 || item.topping != "") {
             subText += ` | Đường: ${item.sugar}%, Đá: ${item.ice}% ${item.topping ? ', Note: ' + item.topping : ''}`;
@@ -566,26 +498,16 @@ function capNhatGiaoDienGioHang() {
 
 function xoaMonKhoiGio(index) {
     globalCart.splice(index, 1);
+    sessionStorage.setItem('homie_cart', JSON.stringify(globalCart));
     capNhatGiaoDienGioHang();
 }
 
 function moGioHangHienTai() {
-    if (globalCart.length === 0) {
-        alert("🛒 Giỏ hàng bạn đang trống, hãy thêm sản phẩm vào giỏ!");
-    } else {
-        document.getElementById('cartModal').style.display = 'flex';
-    }
+    if (globalCart.length === 0) { alert("🛒 Giỏ hàng bạn đang trống, hãy thêm sản phẩm vào giỏ!"); } 
+    else { document.getElementById('cartModal').style.display = 'flex'; }
 }
-
 function dongGioHang() { document.getElementById('cartModal').style.display = 'none'; }
-
-function validateCartBeforeSubmit() {
-    if (globalCart.length === 0) {
-        alert("⚠️ Giỏ hàng không có sản phẩm nào để đặt!");
-        return false;
-    }
-    return true;
-}
+function validateCartBeforeSubmit() { if (globalCart.length === 0) { alert("⚠️ Giỏ hàng không có sản phẩm nào để đặt!"); return false; } return true; }
 
 window.onclick = function(event) {
     if (event.target == document.getElementById('optionsModal')) dongTuyChon();
@@ -595,12 +517,13 @@ window.onclick = function(event) {
 
 <?php if ($thong_bao == "thanh_cong"): ?>
     <script>
-        alert('🎉 Đặt hàng thành công! Tất cả các món ăn ông chọn kèm giá tiền đã được đồng bộ chuẩn vào hệ thống Database.');
+        alert('🎉 Đặt hàng thành công! Đơn hàng đã được đồng bộ vào hệ thống.');
+        sessionStorage.removeItem('homie_cart'); // Xóa giỏ hàng sau khi đặt thành công
         globalCart = [];
         capNhatGiaoDienGioHang();
     </script>
 <?php elseif ($thong_bao == "vui_long_nhap_du"): ?>
-    <script>alert('⚠️ Vui lòng điền đầy đủ thông tin Tên và Số điện thoại để nhận hàng!');</script>
+    <script>alert('⚠️ Vui lòng điền đầy đủ thông tin Tên, Số điện thoại và Địa chỉ để nhận hàng!');</script>
 <?php elseif ($thong_bao == "loi_chi_tiet_don" || $thong_bao == "loi_tao_don_hang"): ?>
     <script>alert('❌ Có lỗi hệ thống xảy ra khi lưu trữ đơn hàng. Vui lòng thử lại sau!');</script>
 <?php endif; ?>
