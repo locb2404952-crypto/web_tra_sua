@@ -37,74 +37,50 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <?php
             }
         } else {
-            $menu_tinh = [
-                '1' => 'Ăn vặt',
-                '2' => 'Cà phê',
-                '3' => 'Khác',
-                '4' => 'Mỳ cay – Lẩu',
-                '5' => 'Sinh tố',
-                '6' => 'Trà sữa',
-                '7' => 'Trà trái cây tươi'
-            ];
-            
-            foreach ($menu_tinh as $key => $value) {
-                ?>
-                <li>
-                    <a href="#danh-muc-<?php echo $key; ?>" class="homie-cat-item">
-                        <span><?php echo $value; ?></span>
-                        <span class="arrow">&gt;</span>
-                    </a>
-                </li>
-                <?php
-            }
+            echo '<li style="padding: 12px; text-align: center; color: #95a5a6; font-size: 13px;">Chưa có danh mục</li>';
         }
         ?>
     </ul>
 </div>
 
 <style>
-/* ==========================================
-   TỰ ĐỘNG ĐỔI MÀU NỀN TOÀN BỘ TRANG WEB
-   ========================================== */
-body {
-    background-color: #fcf1e3 !important; /* Màu da người nhạt / Be trà sữa ngọt ngào ấm áp */
+/* Cấu hình hiệu ứng cuộn toàn trang mượt mà */
+html {
+    scroll-behavior: smooth;
 }
 
-/* ==========================================
-   CSS CHO KHỐI DANH MỤC HOVER
-   ========================================== */
-/* Khung viền bao quanh Danh Mục được đổi sang màu da đậm hơn tí để nổi khối rõ ràng */
+/* Định dạng thanh danh mục gốc */
 .homie-category-hover-container {
-    position: relative;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: sticky;        /* Giữ cố định khi cuộn màn hình */
+    top: 15px;               /* Cách mép trên cùng của màn hình 15px khi cuộn xuống */
+    z-index: 999;            /* Đảm bảo menu luôn nổi lên trên các thẻ sản phẩm khác */
+    
     width: 100%;
-    box-sizing: border-box;
-    border: 2px solid #ecd3b9; 
-    background-color: #fffcf7;  
+    max-width: 260px;
+    background-color: #fffaf5;
+    border: 2px solid #ecd3b9;
+    border-radius: 12px;
     padding: 6px;
-    border-radius: 16px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 15px rgba(236, 211, 185, 0.2);
 }
 
-/* Nút tiêu đề Danh mục chính màu cam gốc của nhóm */
 .homie-category-title-btn {
-    background-color: #ff7066;
-    color: #ffffff;
-    padding: 14px 18px;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 14px;
-    letter-spacing: 0.8px;
+    background-color: #ff7675;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 10px;
-    border-radius: 12px;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(255, 112, 102, 0.15);
-    transition: all 0.3s ease;
+    transition: background-color 0.2s;
 }
 
-/* Khi rê chuột vào khối container */
-.homie-category-hover-container:hover .homie-category-title-btn {
+.homie-category-title-btn:hover {
     background-color: #ff5252;
 }
 
@@ -140,29 +116,38 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 13px 18px;
+    padding: 12px 16px;
+    color: #2d3436;
     text-decoration: none;
-    color: #444444;
-    font-weight: 500;
     font-size: 14px;
-    border-bottom: 1px solid #fff3e8;
+    font-weight: 500;
+    border-bottom: 1px solid #fcf6f0;
     transition: all 0.2s ease;
 }
 
-.homie-category-dropdown-list li:last-child .homie-cat-item {
+.homie-cat-item:last-child {
     border-bottom: none;
 }
 
-.homie-cat-item .arrow {
-    color: #ff7066;
-    font-weight: bold;
-    font-size: 11px;
+.homie-cat-item:hover {
+    background-color: #fff0e6;
+    color: #ff7675;
+    padding-left: 22px;
 }
 
-/* Hiệu ứng lướt chuột qua từng danh mục nhỏ */
-.homie-cat-item:hover {
-    background-color: #fff3e8 !important; /* Đổi sang tông nền trà sữa nhạt khi hover */
-    color: #ff7066 !important;
-    padding-left: 23px !important;
+.homie-cat-item .arrow {
+    color: #b2bec3;
+    font-size: 12px;
+    transition: transform 0.2s;
+}
+
+.homie-cat-item:hover .arrow {
+    color: #ff7675;
+    transform: translateX(3px);
+}
+
+/* Khi bấm nhảy link danh mục, tiêu đề của danh mục đó không bị che mất bởi thanh menu trượt */
+.category-block {
+    scroll-margin-top: 80px; 
 }
 </style>
