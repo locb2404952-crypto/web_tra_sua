@@ -673,5 +673,8 @@ window.onclick = function(event) {
 
 <?php include_once 'lien-he-noi.php'; ?>
 
+<!-- LIÊN KẾT ĐẾN FILE MỚI ĐỂ XỬ LÝ ĐỘC LẬP GIỎ HÀNG TỪ TRANG CHỦ SANG -->
+<?php include 'giohang-trangchu.php'; ?>
+
 </body>
 </html>
