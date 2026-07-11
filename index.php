@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
     $cart_data_json = $_POST['cart_data'];
     $cart_items = json_decode($cart_data_json, true);
 
-    if (empty($ten_khach) || empty($sdt) || empty($cart_items) || empty($diachi)) {
+    if (empty($ten_khach) || empty($sdt) || empty($cart_items) ||empty($diachi)) {
         $thong_bao = "vui_long_nhap_du";
     } else {
         // 1. Tính toán tổng tiền thực tế của toàn bộ đơn hàng
@@ -77,16 +77,16 @@ $result_categories = mysqli_query($conn, $sql_categories);
     <title>Trà Sữa Homie - Thực Đơn Gọi Món</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* THÊM: Tạo hiệu ứng cuộn mượt mà khi click danh mục */
-        html {
-            scroll-behavior: smooth;
-        }
-
         :root {
             --primary-color: #ff7675;   /* Màu hồng cam san hô ngọt ngào */
             --secondary-color: #fab1a0; /* Màu cam nhạt phối hợp */
             --dark-color: #2d3436;      /* Màu chữ tối */
             --light-color: #f9f9f9;     /* Màu nền sáng */
+        }
+
+        /* Thêm cuộn mượt mà khi click từ menu danh mục */
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
@@ -113,21 +113,44 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .auth-buttons a:hover { background-color: white; color: var(--primary-color); }
         .auth-buttons span { color: white; font-weight: bold; margin-right: 10px; }
 
-        /* ĐÃ CHỈNH SỬA: Thay đổi margin từ 'auto' sang '40px 0 40px 50px' để dịch nguyên trang web dạt hẳn về góc trái */
-        .container { max-width: 1340px; margin: 40px 0 40px 50px; padding: 0 20px; }
-        
-        .category-section { margin-bottom: 5px; }
+        /* ==========================================
+           BỐ CỤC CHIA 2 CỘT (CỘT MENU VÀ CỘT NỘI DUNG SẢN PHẨM)
+           ========================================== */
+        .homie-main-layout {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            max-width: 1400px; /* Tăng từ 1200px lên 1400px để mở rộng không gian và tràn đều sang bên trái */
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Cột bên trái: Giữ menu đứng yên cố định khi lăn chuột xuông dưới */
+        .homie-left-sidebar {
+            width: 260px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 25px; /* Khoảng cách cách mép trên màn hình khi cuộn trang */
+            z-index: 999;
+        }
+
+        /* Cột bên phải: Danh sách các món ăn */
+        .homie-right-content {
+            flex-grow: 1;
+        }
+
+        .category-section { margin-bottom: 5px; scroll-margin-top: 25px; }
         .category-title {
             font-size: 24px; color: #d63031; border-bottom: 3px solid var(--primary-color);
             padding-bottom: 6px; margin-bottom: 25px; display: inline-block;
             text-transform: uppercase; letter-spacing: 0.5px;
         }
 
-        /* ĐÃ CHỈNH SỬA: Chuyển sang grid-template-columns linh hoạt để các sản phẩm ôm gọn gàng bên cạnh menu danh mục */
+        /* CHỈNH SỬA: Ép lưới hiển thị đúng 4 ảnh sản phẩm trên 1 hàng để giao diện cân đối */
         .product-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
-            gap: 25px; 
+            grid-template-columns: repeat(4, minmax(0, 1fr)); 
+            gap: 20px; 
         }
 
         .product-card {
@@ -138,7 +161,7 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .product-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(255, 118, 117, 0.15); }
 
         .product-image {
-            width: 100%; height: 180px; background-color: #ffeaa7;
+            width: 100%; height: 160px; background-color: #ffeaa7;
             display: flex; align-items: center; justify-content: center; font-size: 55px; user-select: none;
             overflow: hidden;
         }
@@ -230,6 +253,25 @@ $result_categories = mysqli_query($conn, $sql_categories);
             display: flex; align-items: center; gap: 8px;
         }
         .toast-notification.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        
+        /* Đảm bảo giao diện co giãn hợp lý trên màn hình máy tính nhỏ hoặc máy tính bảng */
+        @media (max-width: 1200px) {
+            .product-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+        @media (max-width: 992px) {
+            .homie-main-layout {
+                flex-direction: column;
+            }
+            .homie-left-sidebar {
+                width: 100%;
+                position: static;
+            }
+            .product-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
     </style>
 </head>
 <body>
@@ -239,10 +281,12 @@ $result_categories = mysqli_query($conn, $sql_categories);
 </div>
 
 <header>
-    <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
-        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
-        
-        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> </div>
+    <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> 
+    <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
+        <a href="trang-chu.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
+        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-utensils"></i> Thực Đơn</a>
+        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> 
+    </div>
     
     <div class="auth-buttons"> <?php if(isset($_SESSION['username'])): ?>
             <span><i class="fa-solid fa-user"></i> Xin chào, <?= htmlspecialchars($_SESSION['username']) ?>!</span>
@@ -254,27 +298,27 @@ $result_categories = mysqli_query($conn, $sql_categories);
     </div>
 </header>
 
-<div class="container" style="display: flex; gap: 25px; align-items: flex-start;">
-
-    <div style="flex: 0 0 230px; width: 230px; position: sticky; top: 20px; z-index: 999;">
-        <?php include 'danh-muc.php'; ?>
+<div class="homie-main-layout">
+    
+    <div class="homie-left-sidebar">
+        <?php include_once 'danh-muc.php'; ?>
     </div>
 
-    <div style="flex: 1; min-width: 0;">
+    <div class="homie-right-content">
         <?php 
-        // Đã đồng bộ: Đưa con trỏ dữ liệu danh mục về vị trí 0 ban đầu
-        if ($result_categories) {
+        // Reset lại con trỏ kết quả categories (vì danh-muc.php có thể đã chạy qua vòng lặp)
+        if (isset($result_categories)) {
             mysqli_data_seek($result_categories, 0);
         }
-
+        
         while ($cat = mysqli_fetch_assoc($result_categories)) {
             $cat_id = $cat['category_id'];
             $sql_products = "SELECT * FROM products WHERE category_id = $cat_id";
             $result_products = mysqli_query($conn, $sql_products);
             
             if (mysqli_num_rows($result_products) > 0) {
-                // SỬA: Thêm ID động id="danh-muc-X" và scroll-margin-top để khi click từ menu, trang web tự trượt đến đúng vùng món ăn này cách mép trên 30px
-                echo '<div class="category-section" id="danh-muc-' . $cat_id . '" style="scroll-margin-top: 30px;">';
+                // Thêm id="danh-muc-..." để khớp với thẻ <a> trong file danh-muc.php
+                echo '<div class="category-section" id="danh-muc-' . $cat_id . '">';
                 echo '<h2 class="category-title">' . htmlspecialchars($cat['category_name']) . '</h2>';
                 echo '<div class="product-grid">';
                 
@@ -316,7 +360,10 @@ $result_categories = mysqli_query($conn, $sql_categories);
             }
         }
         ?>
-    </div> </div> <div id="optionsModal" class="modal">
+    </div>
+</div>
+
+<div id="optionsModal" class="modal">
     <div class="modal-content">
         <button class="close-btn" onclick="dongTuyChon()">&times;</button>
         <h2 id="optionTitle">Tùy Chọn Món</h2>
@@ -518,16 +565,13 @@ function tinhTienTuyChonMon() {
 
 function xacNhanThemMon() {
     let qty = parseInt(document.getElementById('opt_quantity').value);
-    let sugarValue = 100;
-    let iceValue = 100;
+    let sugarValue = document.querySelector('input[name="opt_sugar"]:checked').value;
+    let iceValue = document.querySelector('input[name="opt_ice"]:checked').value;
     let toppingNote = document.getElementById('opt_topping_note').value;
 
-    // Sửa lỗi: Chỉ lấy phần tử radio được check nếu danh mục đó thuộc nhóm đồ uống hiển thị form chọn
-    if (activeProduct.catId != 1 && activeProduct.catId != 4) {
-        let sugarRadio = document.querySelector('input[name="opt_sugar"]:checked');
-        let iceRadio = document.querySelector('input[name="opt_ice"]:checked');
-        if(sugarRadio) sugarValue = sugarRadio.value;
-        if(iceRadio) iceValue = iceRadio.value;
+    if (activeProduct.catId == 1 || activeProduct.catId == 4) {
+        sugarValue = 100;
+        iceValue = 100;
     }
 
     let itemNew = {
@@ -617,7 +661,7 @@ window.onclick = function(event) {
 
 <?php if ($thong_bao == "thanh_cong"): ?>
     <script>
-        alert('🎉 Đặt hàng thành công! Tất cả các món ăn ông chọn kèm giá tiền đã được đồng bộ chuẩn vào hệ thống Database.');
+        alert('🎉 Đặt hàng thành công!');
         globalCart = [];
         capNhatGiaoDienGioHang();
     </script>
@@ -627,7 +671,7 @@ window.onclick = function(event) {
     <script>alert('❌ Có lỗi hệ thống xảy ra khi lưu trữ đơn hàng. Vui lòng thử lại sau!');</script>
 <?php endif; ?>
 
-<?php include 'lien-he-noi.php'; ?>
+<?php include_once 'lien-he-noi.php'; ?>
 
 </body>
 </html>
