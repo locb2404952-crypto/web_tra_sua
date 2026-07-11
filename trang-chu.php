@@ -6,7 +6,7 @@ require_once 'db-connect.php';
 // THUẬT TOÁN SQL: LẤY 2 MÓN CÓ SỐ LƯỢNG MUA NHIỀU NHẤT CỦA TỪNG DANH MỤC
 // ========================================================
 $sql_best_seller = "
-    SELECT p.product_id, p.product_name, p.price, p.description, p.category_id, c.category_name, 
+    SELECT p.product_id, p.product_name, p.price, p.description, p.category_id, p.image_url, c.category_name, 
            IFNULL(SUM(oi.quantity), 0) as total_sold
     FROM products p
     JOIN categories c ON p.category_id = c.category_id
@@ -21,7 +21,7 @@ $sql_best_seller = "
             GROUP BY p2.product_id
         ) as temp
         WHERE temp.category_id = p.category_id 
-          AND (temp.sub_sold > total_sold OR (temp.sub_sold = total_sold AND temp.product_id < p.product_id))
+          AND (temp.sub_sold > IFNULL(SUM(oi.quantity), 0) OR (temp.sub_sold = IFNULL(SUM(oi.quantity), 0) AND temp.product_id < p.product_id))
     ) < 2
     ORDER BY p.category_id ASC, total_sold DESC, p.product_id ASC
 ";
@@ -118,10 +118,17 @@ if ($result_best_seller) {
             padding: 4px 10px; font-size: 11px; font-weight: bold; border-radius: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10;
         }
+        
         .product-image {
-            width: 100%; height: 130px; background-color: #ffeaa7;
-            display: flex; align-items: center; justify-content: center; font-size: 45px; user-select: none;
+            width: 100%; height: 180px; background-color: #ffeaa7;
+            display: flex; align-items: center; justify-content: center; font-size: 55px; user-select: none;
+            overflow: hidden;
         }
+        .product-image img {
+            width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;
+        }
+        .product-card:hover .product-image img { transform: scale(1.05); }
+
         .product-info { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
         .product-name { font-size: 17px; font-weight: bold; margin: 0 0 5px 0; color: #2d3436; }
         .product-desc { font-size: 13px; color: #636e72; margin: 0 0 15px 0; line-height: 1.4; flex-grow: 1; }
@@ -132,6 +139,7 @@ if ($result_best_seller) {
         .btn-buy-now {
             background-color: var(--primary-color); color: white; border: none;
             padding: 7px 15px; border-radius: 20px; font-weight: bold; text-decoration: none; font-size: 13px;
+            cursor: pointer;
         }
         .btn-buy-now:hover { background-color: #ff5252; }
 
@@ -197,7 +205,15 @@ if ($result_best_seller) {
                         ?>
                             <div class="product-card">
                                 <span class="badge-hot"><i class="fa-solid fa-fire"></i> Bán Chạy</span>
-                                <div class="product-image"><?= $icon ?></div>
+                                <div class="product-image">
+                                    <?php if(!empty($prod['image_url']) && file_exists($prod['image_url'])): ?>
+                                        <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                                    <?php elseif(!empty($prod['image_url']) && $prod['image_url'] != 'default.png'): ?>
+                                        <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                                    <?php else: ?>
+                                        <?= $icon ?>
+                                    <?php endif; ?>
+                                </div>
                                 <div class="product-info">
                                     <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
                                     <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
@@ -207,7 +223,7 @@ if ($result_best_seller) {
                                             <br>
                                             <span class="sold-count">Đã bán: <?= $prod['total_sold'] ?> ly/đĩa</span>
                                         </div>
-                                        <a href="index.php" class="btn-buy-now">Đặt Mua</a>
+                                        <a href="index.php?add_id=<?= $prod['product_id'] ?>" class="btn-buy-now">Đặt Mua</a>
                                     </div>
                                 </div>
                             </div>
