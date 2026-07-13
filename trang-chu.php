@@ -240,11 +240,11 @@ if ($result_best_seller) {
 <footer>
     <p>© 2026 Trà Sữa Homie - All Rights Reserved. Thiết kế bởi nhóm dự án web_tra_sua.</p>
 </footer>
-<?php include 'footer.php'; ?>
+
 </body>
 </html>
 <?php
-session_start();
+// session_start();
 require_once 'db-connect.php';
 
 // ========================================================
@@ -501,6 +501,6 @@ if ($result_best_seller) {
 <footer>
     <p>© 2026 Trà Sữa Homie - All Rights Reserved. Thiết kế bởi nhóm dự án web_tra_sua.</p>
 </footer>
-
+<?php include 'footer.php'; ?>
 </body>
 </html>
