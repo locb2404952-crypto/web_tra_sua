@@ -16,6 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
     $cart_items = json_decode($cart_data_json, true);
 
     if (empty($ten_khach) || empty($sdt) || empty($cart_items) || empty($diachi)) {
+    if (empty($ten_khach) || empty($sdt) || empty($cart_items) ||empty($diachi)) {
         $thong_bao = "vui_long_nhap_du";
     } else {
         // 1. Tính toán tổng tiền thực tế của toàn bộ đơn hàng
@@ -84,6 +85,11 @@ $result_categories = mysqli_query($conn, $sql_categories);
             --light-color: #f9f9f9;     /* Màu nền sáng */
         }
 
+        /* Thêm cuộn mượt mà khi click từ menu danh mục */
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0; padding: 0;
@@ -108,15 +114,45 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .auth-buttons a:hover { background-color: white; color: var(--primary-color); }
         .auth-buttons span { color: white; font-weight: bold; margin-right: 10px; }
 
-        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
-        .category-section { margin-bottom: 5px; }
+        /* ==========================================
+           BỐ CỤC CHIA 2 CỘT (CỘT MENU VÀ CỘT NỘI DUNG SẢN PHẨM)
+           ========================================== */
+        .homie-main-layout {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            max-width: 1400px; /* Tăng từ 1200px lên 1400px để mở rộng không gian và tràn đều sang bên trái */
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Cột bên trái: Giữ menu đứng yên cố định khi lăn chuột xuông dưới */
+        .homie-left-sidebar {
+            width: 260px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 25px; /* Khoảng cách cách mép trên màn hình khi cuộn trang */
+            z-index: 999;
+        }
+
+        /* Cột bên phải: Danh sách các món ăn */
+        .homie-right-content {
+            flex-grow: 1;
+        }
+
+        .category-section { margin-bottom: 5px; scroll-margin-top: 25px; }
         .category-title {
             font-size: 24px; color: #d63031; border-bottom: 3px solid var(--primary-color);
             padding-bottom: 6px; margin-bottom: 25px; display: inline-block;
             text-transform: uppercase; letter-spacing: 0.5px;
         }
 
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; }
+        /* CHỈNH SỬA: Ép lưới hiển thị đúng 4 ảnh sản phẩm trên 1 hàng để giao diện cân đối */
+        .product-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, minmax(0, 1fr)); 
+            gap: 20px; 
+        }
 
         .product-card {
             background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.04);
@@ -128,6 +164,10 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .product-image {
             width: 100%; height: 160px; background-color: #ffeaa7;
             display: flex; align-items: center; justify-content: center; font-size: 55px; user-select: none;
+            overflow: hidden;
+        }
+        .product-image img {
+            width: 100%; height: 100%; object-fit: cover;
         }
         .product-image img {
             width: 100%; height: 100%; object-fit: cover;
@@ -217,6 +257,25 @@ $result_categories = mysqli_query($conn, $sql_categories);
             display: flex; align-items: center; gap: 8px;
         }
         .toast-notification.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        
+        /* Đảm bảo giao diện co giãn hợp lý trên màn hình máy tính nhỏ hoặc máy tính bảng */
+        @media (max-width: 1200px) {
+            .product-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+        @media (max-width: 992px) {
+            .homie-main-layout {
+                flex-direction: column;
+            }
+            .homie-left-sidebar {
+                width: 100%;
+                position: static;
+            }
+            .product-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
     </style>
 </head>
 <body>
@@ -230,6 +289,12 @@ $result_categories = mysqli_query($conn, $sql_categories);
         <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
         
         <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> </div>
+    <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> 
+    <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
+        <a href="trang-chu.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
+        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-utensils"></i> Thực Đơn</a>
+        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> 
+    </div>
     
     <div class="auth-buttons"> <?php if(isset($_SESSION['username'])): ?>
             <span><i class="fa-solid fa-user"></i> Xin chào, <?= htmlspecialchars($_SESSION['username']) ?>!</span>
@@ -241,48 +306,69 @@ $result_categories = mysqli_query($conn, $sql_categories);
     </div>
 </header>
 
-<div class="container">
-    <?php 
-    while ($cat = mysqli_fetch_assoc($result_categories)) {
-        $cat_id = $cat['category_id'];
-        $sql_products = "SELECT * FROM products WHERE category_id = $cat_id";
-        $result_products = mysqli_query($conn, $sql_products);
+<div class="homie-main-layout">
+    
+    <div class="homie-left-sidebar">
+        <?php include_once 'danh-muc.php'; ?>
+    </div>
+
+    <div class="homie-right-content">
+        <?php 
+        // Reset lại con trỏ kết quả categories (vì danh-muc.php có thể đã chạy qua vòng lặp)
+        if (isset($result_categories)) {
+            mysqli_data_seek($result_categories, 0);
+        }
         
-        if (mysqli_num_rows($result_products) > 0) {
-            echo '<div class="category-section">';
-            echo '<h2 class="category-title">' . htmlspecialchars($cat['category_name']) . '</h2>';
-            echo '<div class="product-grid">';
+        while ($cat = mysqli_fetch_assoc($result_categories)) {
+            $cat_id = $cat['category_id'];
+            $sql_products = "SELECT * FROM products WHERE category_id = $cat_id";
+            $result_products = mysqli_query($conn, $sql_products);
             
-            while ($prod = mysqli_fetch_assoc($result_products)) {
-                $icon = "🧋"; 
-                if ($cat_id == 1) $icon = "🍟";       
-                if ($cat_id == 2) $icon = "☕";       
-                if ($cat_id == 4) $icon = "🍜";       
-                if ($cat_id == 5) $icon = "🥑";       
-                if ($cat_id == 7) $icon = "🍓";       
-                ?>
-                <div class="product-card">
-                    <div class="product-image"><?= $icon ?></div>
-                    <div class="product-info">
-                        <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
-                        <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
-                        <div class="product-price-action">
-                            <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
-                            <div class="action-buttons-group">
-                                <button class="btn-select" onclick="moTuyChonMon(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">Mua</button>
-                                <button class="btn-mini-cart" title="Thêm nhanh vào giỏ hàng" onclick="themNhanhVaoGioHang(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">
-                                    <i class="fa-solid fa-cart-plus"></i>
-                                </button>
+            if (mysqli_num_rows($result_products) > 0) {
+                // Thêm id="danh-muc-..." để khớp với thẻ <a> trong file danh-muc.php
+                echo '<div class="category-section" id="danh-muc-' . $cat_id . '">';
+                echo '<h2 class="category-title">' . htmlspecialchars($cat['category_name']) . '</h2>';
+                echo '<div class="product-grid">';
+                
+                while ($prod = mysqli_fetch_assoc($result_products)) {
+                    $icon = "🧋"; 
+                    if ($cat_id == 1) $icon = "🍟";       
+                    if ($cat_id == 2) $icon = "☕";       
+                    if ($cat_id == 4) $icon = "🍜";       
+                    if ($cat_id == 5) $icon = "🥑";       
+                    if ($cat_id == 7) $icon = "🍓";       
+                    ?>
+                    <div class="product-card">
+                        <div class="product-image">
+                            <?php if(!empty($prod['image_url']) && file_exists($prod['image_url'])): ?>
+                                <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                            <?php elseif(!empty($prod['image_url']) && $prod['image_url'] != 'default.png'): ?>
+                                <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                            <?php else: ?>
+                                <?= $icon ?>
+                            <?php endif; ?>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
+                            <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
+                            <div class="product-price-action">
+                                <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
+                                <div class="action-buttons-group">
+                                    <button class="btn-select" onclick="moTuyChonMon(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">Mua</button>
+                                    <button class="btn-mini-cart" title="Thêm nhanh vào giỏ hàng" onclick="themNhanhVaoGioHang(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">
+                                        <i class="fa-solid fa-cart-plus"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <?php
+                    <?php
+                }
+                echo '</div></div><br><br>';
             }
-            echo '</div></div><br><br>';
         }
-    }
-    ?>
+        ?>
+    </div>
 </div>
 
 <div id="optionsModal" class="modal">
@@ -497,6 +583,13 @@ function xacNhanThemMon() {
         let iceRadio = document.querySelector('input[name="opt_ice"]:checked');
         if(sugarRadio) sugarValue = sugarRadio.value;
         if(iceRadio) iceValue = iceRadio.value;
+    let sugarValue = document.querySelector('input[name="opt_sugar"]:checked').value;
+    let iceValue = document.querySelector('input[name="opt_ice"]:checked').value;
+    let toppingNote = document.getElementById('opt_topping_note').value;
+
+    if (activeProduct.catId == 1 || activeProduct.catId == 4) {
+        sugarValue = 100;
+        iceValue = 100;
     }
 
     let itemNew = {
@@ -586,7 +679,7 @@ window.onclick = function(event) {
 
 <?php if ($thong_bao == "thanh_cong"): ?>
     <script>
-        alert('🎉 Đặt hàng thành công! Tất cả các món ăn ông chọn kèm giá tiền đã được đồng bộ chuẩn vào hệ thống Database.');
+        alert('🎉 Đặt hàng thành công!');
         globalCart = [];
         capNhatGiaoDienGioHang();
     </script>
@@ -595,6 +688,11 @@ window.onclick = function(event) {
 <?php elseif ($thong_bao == "loi_chi_tiet_don" || $thong_bao == "loi_tao_don_hang"): ?>
     <script>alert('❌ Có lỗi hệ thống xảy ra khi lưu trữ đơn hàng. Vui lòng thử lại sau!');</script>
 <?php endif; ?>
+<?php include_once 'lien-he-noi.php'; ?>
 
+<!-- LIÊN KẾT ĐẾN FILE MỚI ĐỂ XỬ LÝ ĐỘC LẬP GIỎ HÀNG TỪ TRANG CHỦ SANG -->
+<?php include 'giohang-trangchu.php'; ?>
+
+<?php include 'footer.php'; ?>
 </body>
 </html>

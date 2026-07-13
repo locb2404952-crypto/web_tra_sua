@@ -66,13 +66,12 @@
 </div>
 
 <div class="contact-container">
-
-<div class="contact-container">
+    
     <div class="contact-info">
         <h2 style="color: #d63031;">🏠 TRÀ SỮA HOMIE</h2>
         <p><strong>Địa chỉ:</strong> 123 Đường Ba Tháng Hai, Xuân Khánh, Ninh Kiều, Cần Thơ</p>
-        <p><strong>Hotline đặt hàng:</strong> 1900 xxxx (08:00 - 22:00)</p>
-        <p><strong>Email:</strong> lienhe@trasuahomie.com</p>
+        <p><strong>Hotline đặt hàng:</strong> 1900 8386 (08:00 - 22:00)</p>
+        <p><strong>Email:</strong> trasuahomie@.com</p>
         <br>
         <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3928.8415184086424!2d105.7684266147423!3d10.029933692830634!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31a0895a51d60719%3A0x9d76b0035f6d53d0!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBD4bqnbiBUaMah!5e0!3m2!1svi!2s!4v1625000000000!5m2!1svi!2s" width="100%" height="300" style="border:0; border-radius: 8px;" allowfullscreen="" loading="lazy"></iframe>
     </div>
@@ -95,9 +94,8 @@
             <button type="button" class="btn-submit" onclick="alert('🎉 Cảm ơn bạn đã gửi góp ý! Homie sẽ liên hệ lại sớm nhất.')">Gửi Ý Kiến</button>
         </form>
     </div>
-</div>
 
-
+</div> <?php include 'footer.php'; ?>
 
 </body>
 </html>
