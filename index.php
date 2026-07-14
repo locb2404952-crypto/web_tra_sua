@@ -16,7 +16,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
     $cart_items = json_decode($cart_data_json, true);
 
     if (empty($ten_khach) || empty($sdt) || empty($cart_items) || empty($diachi)) {
-    if (empty($ten_khach) || empty($sdt) || empty($cart_items) ||empty($diachi)) {
         $thong_bao = "vui_long_nhap_du";
     } else {
         // 1. Tính toán tổng tiền thực tế của toàn bộ đơn hàng
@@ -285,10 +284,6 @@ $result_categories = mysqli_query($conn, $sql_categories);
 </div>
 
 <header>
-    <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
-        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
-        
-        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> </div>
     <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> 
     <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
         <a href="trang-chu.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
@@ -583,13 +578,6 @@ function xacNhanThemMon() {
         let iceRadio = document.querySelector('input[name="opt_ice"]:checked');
         if(sugarRadio) sugarValue = sugarRadio.value;
         if(iceRadio) iceValue = iceRadio.value;
-    let sugarValue = document.querySelector('input[name="opt_sugar"]:checked').value;
-    let iceValue = document.querySelector('input[name="opt_ice"]:checked').value;
-    let toppingNote = document.getElementById('opt_topping_note').value;
-
-    if (activeProduct.catId == 1 || activeProduct.catId == 4) {
-        sugarValue = 100;
-        iceValue = 100;
     }
 
     let itemNew = {
