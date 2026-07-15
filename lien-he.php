@@ -62,7 +62,7 @@
 
 <div class="sub-header" style="background: #ff7675; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; font-family: sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
     <h2 style="margin:0; font-size: 24px;">🧋 Trà Sữa Homie</h2>
-    <a href="index.php" style="color: white; text-decoration: none; font-weight: bold; background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 4px; transition: 0.3s;"><i class="fa-solid fa-house"></i> Quay Về Trang Chủ</a>
+    <a href="trang-chu.php" style="color: white; text-decoration: none; font-weight: bold; background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 4px; transition: 0.3s;"><i class="fa-solid fa-house"></i> Quay Về Trang Chủ</a>
 </div>
 
 <div class="contact-container">

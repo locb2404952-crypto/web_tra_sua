@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['quick_order'])) {
 }
 
 // ========================================================
-// KHUNG 1: TOP 3 SẢN PHẨM BÁN CHẠY NHẤT (TOÀN HỆ THỐNG)
+// KHUNG 1: TOP 4 SẢN PHẨM BÁN CHẠY NHẤT (TOÀN HỆ THỐNG)
 // ========================================================
 $sql_best_seller = "
     SELECT p.product_id, p.product_name, p.price, p.description, p.category_id, p.image_url, c.category_name,
@@ -50,7 +50,7 @@ $sql_best_seller = "
     GROUP BY p.product_id
     HAVING total_sold > 0
     ORDER BY total_sold DESC, p.product_id ASC
-    LIMIT 3
+    LIMIT 4
 ";
 $result_best_seller = mysqli_query($conn, $sql_best_seller);
 $best_sellers = [];
@@ -302,7 +302,7 @@ function homie_icon($category_id) {
     <p>Thơm ngon từng giọt - Đậm vị yêu thương</p>
     <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
         <a href="trang-chu.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
-        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-utensils"></i> Thực Đơn</a>
+        <a href="thuc-don.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-utensils"></i> Thực Đơn</a>
         <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a>
     </div>
     
@@ -321,12 +321,12 @@ function homie_icon($category_id) {
     <div class="hero-section">
         <h2>Chào Mừng Đến Với Homie Tea</h2>
         <p>Không gian ngọt ngào, đồ uống chuẩn vị, nguyên liệu 100% tự nhiên!</p>
-        <a href="index.php" class="btn-menu-now"><i class="fa-solid fa-circle-play"></i> Xem Thực Đơn & Đặt Món Ngay</a>
+        <a href="thuc-don.php" class="btn-menu-now"><i class="fa-solid fa-circle-play"></i> Xem Thực Đơn & Đặt Món Ngay</a>
     </div>
 
-    <!-- ================= KHUNG 1: BEST SELLER (TOP 3 BÁN CHẠY NHẤT) ================= -->
+    <!-- ================= KHUNG 1: BEST SELLER (TOP 4 BÁN CHẠY NHẤT) ================= -->
     <div class="bestseller-box">
-        <h2 class="section-block-title"><i class="fa-solid fa-crown"></i> Top 3 Món Bán Chạy Nhất <i class="fa-solid fa-crown"></i></h2>
+        <h2 class="section-block-title"><i class="fa-solid fa-crown"></i> Top Những Món Bán Chạy Nhất <i class="fa-solid fa-crown"></i></h2>
 
         <?php if (empty($best_sellers)): ?>
             <p class="empty-block-msg">Hệ thống chưa ghi nhận lượt đặt mua nào. Hãy là người mua đầu tiên nhé!</p>

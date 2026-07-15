@@ -38,7 +38,6 @@ INSERT INTO `products` (`category_id`, `product_name`, `price`, `description`) V
 (2, 'Cà phê sữa tươi', 22000.00, 'Sữa tươi hòa quyện cùng cốt cà phê thơm nồng'),
 
 -- Khác
-(3, 'Sản phẩm test', 1000.00, 'Dành cho lập trình viên chạy thử nghiệm hệ thống'),
 (3, 'Yaourt đá', 20000.00, 'Sữa chua đánh đá chanh thanh mát'),
 (3, 'Yaourt dâu', 25000.00, 'Sữa chua kết hợp mứt dâu tây ngọt lịm'),
 (3, 'Cacao sữa', 25000.00, 'Cacao đậm đà pha sữa nóng hoặc đá'),

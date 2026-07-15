@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if ($_SESSION['role'] === 'admin') {
                     header("Location: admin.php"); // Nếu là admin thì bay thẳng vào trang quản lý
                 } else {
-                    header("Location: index.php"); // Nếu là khách thường thì về trang chủ đặt trà sữa
+                    header("Location: trang-chu.php"); // Nếu là khách thường thì về trang chủ đặt trà sữa
                 }
                 exit();
             } else {

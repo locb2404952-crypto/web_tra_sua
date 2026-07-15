@@ -57,6 +57,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
 
 $sql_categories = "SELECT * FROM categories";
 $result_categories = mysqli_query($conn, $sql_categories);
+
+// LẤY 4 MÓN MỚI ĐĂNG TẢI GẦN ĐÂY NHẤT (dựa theo product_id tăng dần, món thêm sau sẽ có id lớn hơn)
+// để hiển thị lên đầu trang trước tất cả các danh mục
+$sql_mon_moi = "SELECT * FROM products ORDER BY product_id DESC LIMIT 4";
+$result_mon_moi = mysqli_query($conn, $sql_mon_moi);
 ?>
 
 <!DOCTYPE html>
@@ -127,6 +132,10 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .product-image {
             width: 100%; height: 160px; background-color: #ffeaa7;
             display: flex; align-items: center; justify-content: center; font-size: 55px; user-select: none;
+            overflow: hidden;
+        }
+        .product-image img {
+            width: 100%; height: 100%; object-fit: cover;
         }
 
         .product-info { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
@@ -239,6 +248,46 @@ $result_categories = mysqli_query($conn, $sql_categories);
 </header>
 
 <div class="container">
+    <?php if ($result_mon_moi && mysqli_num_rows($result_mon_moi) > 0): ?>
+    <div class="category-section" id="mon-moi">
+        <h2 class="category-title" style="color:#0984e3; border-bottom-color:#0984e3;">🌟 Món Mới</h2>
+        <div class="product-grid">
+            <?php while ($prod = mysqli_fetch_assoc($result_mon_moi)):
+                $cat_id = $prod['category_id'];
+                $icon = "🧋";
+                if ($cat_id == 1) $icon = "🍟";
+                if ($cat_id == 2) $icon = "☕";
+                if ($cat_id == 4) $icon = "🍜";
+                if ($cat_id == 5) $icon = "🥑";
+                if ($cat_id == 7) $icon = "🍓";
+            ?>
+                <div class="product-card">
+                    <div class="product-image">
+                        <?php if (!empty($prod['image_url']) && $prod['image_url'] != 'default.png' && file_exists($prod['image_url'])): ?>
+                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                        <?php else: ?>
+                            <?= $icon ?>
+                        <?php endif; ?>
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
+                        <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
+                        <div class="product-price-action">
+                            <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
+                            <div class="action-buttons-group">
+                                <button class="btn-select" onclick="moTuyChonMon(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">Mua</button>
+                                <button class="btn-mini-cart" title="Thêm nhanh vào giỏ hàng" onclick="themNhanhVaoGioHang(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">
+                                    <i class="fa-solid fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endwhile; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <?php 
     while ($cat = mysqli_fetch_assoc($result_categories)) {
         $cat_id = $cat['category_id'];
@@ -259,7 +308,13 @@ $result_categories = mysqli_query($conn, $sql_categories);
                 if ($cat_id == 7) $icon = "🍓";       
                 ?>
                 <div class="product-card">
-                    <div class="product-image"><?= $icon ?></div>
+                    <div class="product-image">
+                        <?php if (!empty($prod['image_url']) && $prod['image_url'] != 'default.png' && file_exists($prod['image_url'])): ?>
+                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
+                        <?php else: ?>
+                            <?= $icon ?>
+                        <?php endif; ?>
+                    </div>
                     <div class="product-info">
                         <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
                         <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
@@ -517,7 +572,7 @@ window.onclick = function(event) {
 
 <?php if ($thong_bao == "thanh_cong"): ?>
     <script>
-        alert('🎉 Đặt hàng thành công! Đơn hàng đã được đồng bộ vào hệ thống.');
+        alert('🎉 Bạn đã đặt hàng thành công.Homie xin cảm ơn.');
         sessionStorage.removeItem('homie_cart'); // Xóa giỏ hàng sau khi đặt thành công
         globalCart = [];
         capNhatGiaoDienGioHang();

@@ -1,149 +1,150 @@
 <?php
-session_start();
+session_start(); //
 
 // Kiểm tra đã đăng nhập chưa
-if (!isset($_SESSION['user_id'])) {
-    header("Location: dang-nhap.php");
-    exit();
+if (!isset($_SESSION['user_id'])) { //
+    header("Location: dang-nhap.php"); //
+    exit(); //[cite: 2]
 }
 
 // Kiểm tra có phải admin không
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: index.php");
-    exit();
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') { //[cite: 2]
+    header("Location: trang-chu.php"); //[cite: 2]
+    exit(); //[cite: 2]
 }
 
-require_once 'db-connect.php';
+require_once 'db-connect.php'; //[cite: 2]
 // 3. Nhúng file kết nối database  
 
 // ==========================================
-if (isset($_POST['update_status'])) {
-    $order_id = intval($_POST['order_id']);
-    $new_status = mysqli_real_escape_string($conn, $_POST['status']);
+if (isset($_POST['update_status'])) { //[cite: 2]
+    $order_id = intval($_POST['order_id']); //[cite: 2]
+    $new_status = mysqli_real_escape_string($conn, $_POST['status']); //[cite: 2]
     
-    $sql_update_status = "UPDATE orders SET status = '$new_status' WHERE order_id = $order_id";
-    mysqli_query($conn, $sql_update_status);
-    header("Location: admin.php");
-    exit();
+    $sql_update_status = "UPDATE orders SET status = '$new_status' WHERE order_id = $order_id"; //[cite: 2]
+    mysqli_query($conn, $sql_update_status); //[cite: 2]
+    header("Location: admin.php"); //[cite: 2]
+    exit(); //[cite: 2]
 }
 
 // 4. XỬ LÝ CHỨC NĂNG: THÊM MÓN MỚI (Của Huy)
-if (isset($_POST['add_product'])) {
-    $product_name = mysqli_real_escape_string($conn, $_POST['product_name']);
-    $category_id = intval($_POST['category_id']);
-    $price = floatval($_POST['price']);
-    $description = mysqli_real_escape_string($conn, $_POST['description']);
+if (isset($_POST['add_product'])) { //[cite: 2]
+    $product_name = mysqli_real_escape_string($conn, $_POST['product_name']); //[cite: 2]
+    $category_id = intval($_POST['category_id']); //[cite: 2]
+    $price = floatval($_POST['price']); //[cite: 2]
+    $description = mysqli_real_escape_string($conn, $_POST['description']); //[cite: 2]
     
-    $image_url = 'default.png'; 
+    // ĐÃ SỬA: Đồng bộ đường dẫn ảnh mặc định có thư mục images/
+    $image_url = 'images/default.png'; 
 
-    if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
-        $target_dir = "images/"; 
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0777, true);
+    if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) { //[cite: 2]
+        $target_dir = "images/"; //[cite: 2]
+        if (!file_exists($target_dir)) { //[cite: 2]
+            mkdir($target_dir, 0777, true); //[cite: 2]
         }
-        $file_extension = pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION);
-        $new_file_name = time() . '_' . uniqid() . '.' . $file_extension;
-        $target_file = $target_dir . $new_file_name;
+        $file_extension = pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION); //[cite: 2]
+        $new_file_name = time() . '_' . uniqid() . '.' . $file_extension; //[cite: 2]
+        $target_file = $target_dir . $new_file_name; //[cite: 2]
 
-        if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) {
-            $image_url = $target_file; 
+        if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) { //[cite: 2]
+            $image_url = $target_file; //[cite: 2]
         }
     }
 
-    if (!empty($product_name) && $category_id > 0 && $price > 0) {
+    if (!empty($product_name) && $category_id > 0 && $price > 0) { //[cite: 2]
         $sql_add = "INSERT INTO products (category_id, product_name, price, description, image_url) 
-                    VALUES ($category_id, '$product_name', $price, '$description', '$image_url')";
-        mysqli_query($conn, $sql_add);
-        header("Location: admin.php");
-        exit();
+                    VALUES ($category_id, '$product_name', $price, '$description', '$image_url')"; //[cite: 2]
+        mysqli_query($conn, $sql_add); //[cite: 2]
+        header("Location: admin.php"); //[cite: 2]
+        exit(); //[cite: 2]
     }
 }
 
 // 5. XỬ LÝ CHỨC NĂNG: XÓA MÓN
-if (isset($_GET['delete_id'])) {
-    $product_id = intval($_GET['delete_id']);
-    $sql_delete = "DELETE FROM products WHERE product_id = $product_id";
-    mysqli_query($conn, $sql_delete);
-    header("Location: admin.php");
-    exit();
+if (isset($_GET['delete_id'])) { //[cite: 2]
+    $product_id = intval($_GET['delete_id']); //[cite: 2]
+    $sql_delete = "DELETE FROM products WHERE product_id = $product_id"; //[cite: 2]
+    mysqli_query($conn, $sql_delete); //[cite: 2]
+    header("Location: admin.php"); //[cite: 2]
+    exit(); //[cite: 2]
 } 
 
 // 6. XỬ LÝ CHỨC NĂNG: SỬA MÓN
-if (isset($_POST['edit_product'])) {
-    $product_id = intval($_POST['product_id']);
-    $product_name = mysqli_real_escape_string($conn, $_POST['product_name']);
-    $category_id = intval($_POST['category_id']);
-    $price = floatval($_POST['price']);
-    $description = mysqli_real_escape_string($conn, $_POST['description']);
+if (isset($_POST['edit_product'])) { //[cite: 2]
+    $product_id = intval($_POST['product_id']); //[cite: 2]
+    $product_name = mysqli_real_escape_string($conn, $_POST['product_name']); //[cite: 2]
+    $category_id = intval($_POST['category_id']); //[cite: 2]
+    $price = floatval($_POST['price']); //[cite: 2]
+    $description = mysqli_real_escape_string($conn, $_POST['description']); //[cite: 2]
 
-    if (!empty($product_name) && $price > 0) {
-        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
-            $target_dir = "images/"; 
-            if (!file_exists($target_dir)) {
-                mkdir($target_dir, 0777, true);
+    if (!empty($product_name) && $price > 0) { //[cite: 2]
+        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) { //[cite: 2]
+            $target_dir = "images/"; //[cite: 2]
+            if (!file_exists($target_dir)) { //[cite: 2]
+                mkdir($target_dir, 0777, true); //[cite: 2]
             }
-            $file_extension = pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION);
-            $new_file_name = time() . '_' . uniqid() . '.' . $file_extension;
-            $target_file = $target_dir . $new_file_name;
+            $file_extension = pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION); //[cite: 2]
+            $new_file_name = time() . '_' . uniqid() . '.' . $file_extension; //[cite: 2]
+            $target_file = $target_dir . $new_file_name; //[cite: 2]
 
-            if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) {
+            if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) { //[cite: 2]
                 $sql_update = "UPDATE products 
                                SET product_name = '$product_name', category_id = $category_id, price = $price, description = '$description', image_url = '$target_file' 
-                               WHERE product_id = $product_id";
+                               WHERE product_id = $product_id"; //[cite: 2]
             }
         } else {
             $sql_update = "UPDATE products 
                            SET product_name = '$product_name', category_id = $category_id, price = $price, description = '$description' 
-                           WHERE product_id = $product_id";
+                           WHERE product_id = $product_id"; //[cite: 2]
         }
         
-        mysqli_query($conn, $sql_update);
-        header("Location: admin.php");
-        exit();
+        mysqli_query($conn, $sql_update); //[cite: 2]
+        header("Location: admin.php"); //[cite: 2]
+        exit(); //[cite: 2]
     }
 }
 
 // 6b. XỬ LÝ CHỨC NĂNG: THÊM SẢN PHẨM VÀO KHUYẾN MÃI TUẦN NÀY (Trang chủ - Khung 2)
-if (isset($_POST['add_promotion'])) {
-    $promo_product_id = intval($_POST['promo_product_id']);
-    $promo_discount = intval($_POST['promo_discount']);
+if (isset($_POST['add_promotion'])) { //[cite: 2]
+    $promo_product_id = intval($_POST['promo_product_id']); //[cite: 2]
+    $promo_discount = intval($_POST['promo_discount']); //[cite: 2]
 
-    if ($promo_product_id > 0 && $promo_discount > 0) {
-        $sql_add_promo = "INSERT INTO promotions (product_id, discount_percent, is_active) VALUES ($promo_product_id, $promo_discount, 1)";
-        mysqli_query($conn, $sql_add_promo);
+    if ($promo_product_id > 0 && $promo_discount > 0) { //[cite: 2]
+        $sql_add_promo = "INSERT INTO promotions (product_id, discount_percent, is_active) VALUES ($promo_product_id, $promo_discount, 1)"; //[cite: 2]
+        mysqli_query($conn, $sql_add_promo); //[cite: 2]
     }
-    header("Location: admin.php");
-    exit();
+    header("Location: admin.php"); //[cite: 2]
+    exit(); //[cite: 2]
 }
 
 // 6c. XỬ LÝ CHỨC NĂNG: TẮT KHUYẾN MÃI (Khi hết tuần / không áp dụng nữa)
-if (isset($_GET['deactivate_promo_id'])) {
-    $promotion_id = intval($_GET['deactivate_promo_id']);
-    $sql_deactivate = "UPDATE promotions SET is_active = 0 WHERE promotion_id = $promotion_id";
-    mysqli_query($conn, $sql_deactivate);
-    header("Location: admin.php");
-    exit();
+if (isset($_GET['deactivate_promo_id'])) { //[cite: 2]
+    $promotion_id = intval($_GET['deactivate_promo_id']); //[cite: 2]
+    $sql_deactivate = "UPDATE promotions SET is_active = 0 WHERE promotion_id = $promotion_id"; //[cite: 2]
+    mysqli_query($conn, $sql_deactivate); //[cite: 2]
+    header("Location: admin.php"); //[cite: 2]
+    exit(); //[cite: 2]
 }
 
 // 7. Lấy danh sách sản phẩm hiển thị ra bảng
 $sql = "SELECT p.*, c.category_name 
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.category_id 
-        ORDER BY p.product_id DESC";
-$result = mysqli_query($conn, $sql);
-$products_list = [];
-if ($result) {
-    while ($p = mysqli_fetch_assoc($result)) {
-        $products_list[] = $p;
+        ORDER BY p.product_id DESC"; //[cite: 2]
+$result = mysqli_query($conn, $sql); //[cite: 2]
+$products_list = []; //[cite: 2]
+if ($result) { //[cite: 2]
+    while ($p = mysqli_fetch_assoc($result)) { //[cite: 2]
+        $products_list[] = $p; //[cite: 2]
     }
 }
 
 // 8. Lấy danh sách danh mục để đổ vào thẻ chọn <select>
-$sql_cates = "SELECT * FROM categories ORDER BY category_name ASC";
-$result_cates = mysqli_query($conn, $sql_cates);
-$categories_list = [];
-while($cat = mysqli_fetch_assoc($result_cates)) {
-    $categories_list[] = $cat;
+$sql_cates = "SELECT * FROM categories ORDER BY category_name ASC"; //[cite: 2]
+$result_cates = mysqli_query($conn, $sql_cates); //[cite: 2]
+$categories_list = []; //[cite: 2]
+while($cat = mysqli_fetch_assoc($result_cates)) { //[cite: 2]
+    $categories_list[] = $cat; //[cite: 2]
 }
 
 // 8b. Lấy danh sách khuyến mãi đang áp dụng để hiển thị bảng quản lý khuyến mãi
@@ -153,12 +154,12 @@ $sql_promo_list = "
     JOIN products p ON pr.product_id = p.product_id
     WHERE pr.is_active = 1
     ORDER BY pr.created_at DESC
-";
-$result_promo_list = mysqli_query($conn, $sql_promo_list);
-$promo_list = [];
-if ($result_promo_list) {
-    while ($pr = mysqli_fetch_assoc($result_promo_list)) {
-        $promo_list[] = $pr;
+"; //[cite: 2]
+$result_promo_list = mysqli_query($conn, $sql_promo_list); //[cite: 2]
+$promo_list = []; //[cite: 2]
+if ($result_promo_list) { //[cite: 2]
+    while ($pr = mysqli_fetch_assoc($result_promo_list)) { //[cite: 2]
+        $promo_list[] = $pr; //[cite: 2]
     }
 }
 
@@ -180,8 +181,8 @@ $sql_orders = "SELECT
         JOIN users ON orders.user_id = users.user_id
         JOIN order_items ON orders.order_id = order_items.order_id
         JOIN products ON order_items.product_id = products.product_id
-        ORDER BY orders.created_at DESC";
-$result_orders = mysqli_query($conn, $sql_orders);
+        ORDER BY orders.created_at DESC"; //[cite: 2]
+$result_orders = mysqli_query($conn, $sql_orders); //[cite: 2]
 ?>
 
 <!DOCTYPE html>
@@ -243,7 +244,8 @@ $result_orders = mysqli_query($conn, $sql_orders);
         .product-table td { padding: 16px 24px; border-bottom: 1px solid #ffe5ec; font-size: 15px; vertical-align: middle; }
         .product-table tbody tr:hover { background-color: #fff8f9; }
         
-        .product-info { display: block; } 
+        .product-info { display: flex; align-items: center; gap: 15px; } /* ĐÃ SỬA CSS CHO PHẦN THUMBNAIL */
+        .product-thumbnail { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid #ffe5ec; flex-shrink: 0; }
         .product-name-txt { font-weight: 600; color: #1a202c; font-size: 16px; }
         .product-desc-txt { font-size: 13px; color: #718096; margin-top: 4px; line-height: 1.4; }
         .stt-num { font-weight: 700; color: #ff758f; text-align: center; }
@@ -315,9 +317,13 @@ $result_orders = mysqli_query($conn, $sql_orders);
                         <tr>
                             <td class="stt-num"><?php echo $stt++; ?></td>
                             <td>
+                                <!-- ĐÃ SỬA: Thêm ảnh thu nhỏ hiển thị ngay tại trang quản lý để tiện kiểm tra lỗi -->
                                 <div class="product-info">
-                                    <div class="product-name-txt"><?php echo htmlspecialchars($row['product_name']); ?></div>
-                                    <div class="product-desc-txt"><?php echo htmlspecialchars($row['description'] ? $row['description'] : 'Chưa có mô tả ngắn.'); ?></div>
+                                    <img src="<?php echo htmlspecialchars($row['image_url']); ?>" alt="product_img" class="product-thumbnail" onerror="this.src='images/default.png';">
+                                    <div>
+                                        <div class="product-name-txt"><?php echo htmlspecialchars($row['product_name']); ?></div>
+                                        <div class="product-desc-txt"><?php echo htmlspecialchars($row['description'] ? $row['description'] : 'Chưa có mô tả ngắn.'); ?></div>
+                                    </div>
                                 </div>
                             </td>
                             <td><span class="cate-badge"><?php echo htmlspecialchars($row['category_name'] ? $row['category_name'] : 'Khác'); ?></span></td>
