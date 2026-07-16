@@ -300,7 +300,8 @@ $result_orders = mysqli_query($conn, $sql_orders);
             <thead>
                 <tr>
                     <th style="width: 8%; text-align: center;">STT</th>
-                    <th style="width: 44%;">Thông tin món ăn / Đồ uống</th>
+                    <th style="width: 10%; text-align: center;">Ảnh</th>
+                    <th style="width: 34%;">Thông tin món ăn / Đồ uống</th>
                     <th style="width: 18%;">Danh mục</th>
                     <th style="width: 15%;">Giá bán</th>
                     <th style="width: 15%; text-align: center;">Thao tác</th>
@@ -314,6 +315,13 @@ $result_orders = mysqli_query($conn, $sql_orders);
                         ?>
                         <tr>
                             <td class="stt-num"><?php echo $stt++; ?></td>
+                            <td style="text-align:center;">
+                                <?php if (!empty($row['image_url']) && $row['image_url'] !== 'default.png' && file_exists($row['image_url'])): ?>
+                                    <img src="<?php echo htmlspecialchars($row['image_url']); ?>" alt="" style="width:48px; height:48px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0;">
+                                <?php else: ?>
+                                    <span style="display:inline-block; width:48px; height:48px; line-height:48px; text-align:center; background:#f1f2f6; border-radius:8px; color:#a0aec0; font-size:11px;">Chưa có</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <div class="product-info">
                                     <div class="product-name-txt"><?php echo htmlspecialchars($row['product_name']); ?></div>
@@ -332,7 +340,7 @@ $result_orders = mysqli_query($conn, $sql_orders);
                         <?php
                     }
                 } else {
-                    echo "<tr><td colspan='5' style='text-align:center; padding: 30px; color: #a0aec0;'>Chưa có món ăn nào.</td></tr>";
+                    echo "<tr><td colspan='6' style='text-align:center; padding: 30px; color: #a0aec0;'>Chưa có món ăn nào.</td></tr>";
                 }
                 ?>
             </tbody>

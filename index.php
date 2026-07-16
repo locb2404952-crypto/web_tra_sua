@@ -67,6 +67,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
 // 2. LẤY DANH SÁCH DANH MỤC SẢN PHẨM RA GIAO DIỆN
 $sql_categories = "SELECT * FROM categories";
 $result_categories = mysqli_query($conn, $sql_categories);
+
+// ========================================================
+// LẤY 4 MÓN MỚI NHẤT (theo thời gian đăng tải) ĐỂ HIỂN THỊ LÊN ĐẦU THỰC ĐƠN
+// ========================================================
+$sql_new_products = "
+    SELECT p.*, c.category_name 
+    FROM products p
+    JOIN categories c ON p.category_id = c.category_id
+    ORDER BY p.created_at DESC, p.product_id DESC
+    LIMIT 4
+";
+$result_new_products = mysqli_query($conn, $sql_new_products);
+$new_products = [];
+if ($result_new_products) {
+    while ($row = mysqli_fetch_assoc($result_new_products)) {
+        $new_products[] = $row;
+    }
+}
+
+// Hàm kiểm tra ảnh sản phẩm: chỉ hiện <img> khi file ảnh thật sự tồn tại trên server,
+// nếu không thì hiện icon emoji thay thế (tránh hiện icon ảnh vỡ)
+function homie_render_image($prod, $icon) {
+    if (!empty($prod['image_url']) && $prod['image_url'] !== 'default.png' && file_exists($prod['image_url'])) {
+        echo '<img src="' . htmlspecialchars($prod['image_url']) . '" alt="' . htmlspecialchars($prod['product_name']) . '">';
+    } else {
+        echo $icon;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -140,6 +168,10 @@ $result_categories = mysqli_query($conn, $sql_categories);
         }
 
         .category-section { margin-bottom: 5px; scroll-margin-top: 25px; }
+        .new-products-section {
+            background: #f0f8ff; border: 2px dashed #0984e3; border-radius: 15px;
+            padding: 20px; margin-bottom: 25px;
+        }
         .category-title {
             font-size: 24px; color: #d63031; border-bottom: 3px solid var(--primary-color);
             padding-bottom: 6px; margin-bottom: 25px; display: inline-block;
@@ -308,6 +340,50 @@ $result_categories = mysqli_query($conn, $sql_categories);
     </div>
 
     <div class="homie-right-content">
+        <?php
+        // Hàm dùng chung để render 1 thẻ sản phẩm (tránh lặp code giữa khối Món Mới và các danh mục)
+        function homie_render_product_card($prod, $cat_id) {
+            $icon = "🧋";
+            if ($cat_id == 1) $icon = "🍟";
+            if ($cat_id == 2) $icon = "☕";
+            if ($cat_id == 4) $icon = "🍜";
+            if ($cat_id == 5) $icon = "🥑";
+            if ($cat_id == 7) $icon = "🍓";
+            ?>
+            <div class="product-card">
+                <div class="product-image">
+                    <?php homie_render_image($prod, $icon); ?>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
+                    <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
+                    <div class="product-price-action">
+                        <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
+                        <div class="action-buttons-group">
+                            <button class="btn-select" onclick="moTuyChonMon(<?= $prod['product_id'] ?>, '<?= htmlspecialchars(addslashes($prod['product_name'])) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">Mua</button>
+                            <button class="btn-mini-cart" title="Thêm nhanh vào giỏ hàng" onclick="themNhanhVaoGioHang(<?= $prod['product_id'] ?>, '<?= htmlspecialchars(addslashes($prod['product_name'])) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">
+                                <i class="fa-solid fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php
+        }
+        ?>
+
+        <?php if (!empty($new_products)): ?>
+        <div class="category-section new-products-section">
+            <h2 class="category-title" style="color:#0984e3; border-bottom-color:#0984e3;"><i class="fa-solid fa-sparkles"></i> Món Mới</h2>
+            <div class="product-grid">
+                <?php foreach ($new_products as $np): ?>
+                    <?php homie_render_product_card($np, $np['category_id']); ?>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <br><br>
+        <?php endif; ?>
+
         <?php 
         // Reset lại con trỏ kết quả categories (vì danh-muc.php có thể đã chạy qua vòng lặp)
         if (isset($result_categories)) {
@@ -326,38 +402,7 @@ $result_categories = mysqli_query($conn, $sql_categories);
                 echo '<div class="product-grid">';
                 
                 while ($prod = mysqli_fetch_assoc($result_products)) {
-                    $icon = "🧋"; 
-                    if ($cat_id == 1) $icon = "🍟";       
-                    if ($cat_id == 2) $icon = "☕";       
-                    if ($cat_id == 4) $icon = "🍜";       
-                    if ($cat_id == 5) $icon = "🥑";       
-                    if ($cat_id == 7) $icon = "🍓";       
-                    ?>
-                    <div class="product-card">
-                        <div class="product-image">
-                            <?php if(!empty($prod['image_url']) && file_exists($prod['image_url'])): ?>
-                                <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
-                            <?php elseif(!empty($prod['image_url']) && $prod['image_url'] != 'default.png'): ?>
-                                <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
-                            <?php else: ?>
-                                <?= $icon ?>
-                            <?php endif; ?>
-                        </div>
-                        <div class="product-info">
-                            <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
-                            <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
-                            <div class="product-price-action">
-                                <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
-                                <div class="action-buttons-group">
-                                    <button class="btn-select" onclick="moTuyChonMon(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">Mua</button>
-                                    <button class="btn-mini-cart" title="Thêm nhanh vào giỏ hàng" onclick="themNhanhVaoGioHang(<?= $prod['product_id'] ?>, '<?= htmlspecialchars($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">
-                                        <i class="fa-solid fa-cart-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <?php
+                    homie_render_product_card($prod, $cat_id);
                 }
                 echo '</div></div><br><br>';
             }

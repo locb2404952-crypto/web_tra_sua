@@ -326,7 +326,7 @@ function homie_icon($category_id) {
 
     <!-- ================= KHUNG 1: BEST SELLER (TOP 3 BÁN CHẠY NHẤT) ================= -->
     <div class="bestseller-box">
-        <h2 class="section-block-title"><i class="fa-solid fa-crown"></i> Top 3 Món Bán Chạy Nhất <i class="fa-solid fa-crown"></i></h2>
+        <h2 class="section-block-title"><i class="fa-solid fa-crown"></i> Top Những Món Bán Chạy Nhất <i class="fa-solid fa-crown"></i></h2>
 
         <?php if (empty($best_sellers)): ?>
             <p class="empty-block-msg">Hệ thống chưa ghi nhận lượt đặt mua nào. Hãy là người mua đầu tiên nhé!</p>
