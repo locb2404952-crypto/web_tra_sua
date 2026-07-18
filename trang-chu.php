@@ -6,6 +6,7 @@ $order_message = "";
 
 // ========================================================
 // XỬ LÝ ĐẶT MUA NHANH NGAY TẠI TRANG CHỦ (KHÔNG CẦN CHUYỂN TRANG)
+// (Giữ nguyên phương thức xử lý gốc)
 // ========================================================
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['quick_order'])) {
     $product_id   = intval($_POST['qo_product_id']);
@@ -65,8 +66,7 @@ $exclude_ids = !empty($best_seller_ids) ? implode(',', $best_seller_ids) : '0';
 
 // ========================================================
 // KHUNG 2: SẢN PHẨM KHUYẾN MÃI TRONG TUẦN (DO ADMIN CHỌN Ở TRANG QUẢN LÝ)
-// Nếu tuần nào admin không chọn sản phẩm khuyến mãi nào (bảng promotions rỗng/không có dòng active)
-// thì mảng $promotions sẽ rỗng và khối này tự động không hiển thị.
+// Nếu tuần nào admin không chọn sản phẩm khuyến mãi nào thì khối này tự ẩn.
 // ========================================================
 $sql_promo = "
     SELECT pr.promotion_id, pr.discount_percent, p.product_id, p.product_name, p.price, p.description, 
@@ -91,7 +91,6 @@ $exclude_ids_2 = !empty(array_merge($best_seller_ids, $promo_ids)) ? implode(','
 
 // ========================================================
 // KHUNG 3: SẢN PHẨM MỚI ĐƯỢC THÊM VÀO GẦN ĐÂY NHẤT
-// Mỗi khi admin thêm món mới ở trang quản lý, món đó sẽ tự động xuất hiện ở đây.
 // ========================================================
 $sql_new = "
     SELECT p.product_id, p.product_name, p.price, p.description, p.category_id, p.image_url, c.category_name
@@ -119,6 +118,15 @@ function homie_icon($category_id) {
     if ($category_id == 7) $icon = "🍓";
     return $icon;
 }
+
+// Hàm kiểm tra + render ảnh sản phẩm an toàn (tránh icon ảnh vỡ)
+function homie_render_image($prod) {
+    if (!empty($prod['image_url']) && $prod['image_url'] !== 'default.png' && file_exists($prod['image_url'])) {
+        echo '<img src="' . htmlspecialchars($prod['image_url']) . '" alt="' . htmlspecialchars($prod['product_name']) . '">';
+    } else {
+        echo homie_icon($prod['category_id']);
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -135,6 +143,8 @@ function homie_icon($category_id) {
             --light-color: #f9f9f9;
         }
 
+        html { scroll-behavior: smooth; }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0; padding: 0;
@@ -150,6 +160,12 @@ function homie_icon($category_id) {
         header h1 { margin: 0; font-size: 32px; letter-spacing: 1px; }
         header p { margin: 10px 0 0 0; font-size: 16px; opacity: 0.9; }
 
+        .main-menu a {
+            color: white; text-decoration: none; font-weight: bold;
+            transition: all 0.3s ease; padding: 5px 10px; border-radius: 4px;
+        }
+        .main-menu a:hover { background-color: rgba(255,255,255,0.2); }
+
         .auth-buttons { position: absolute; top: 30px; right: 30px; }
         .auth-buttons a {
             color: white; text-decoration: none; margin-left: 15px;
@@ -160,7 +176,7 @@ function homie_icon($category_id) {
         .auth-buttons span { color: white; font-weight: bold; margin-right: 10px; }
 
         .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
-        
+
         .hero-section {
             background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://img.freepik.com/free-photo/delicious-bubble-tea-table_23-2150764127.jpg') no-repeat center center/cover;
             height: 350px; border-radius: 15px; display: flex; flex-direction: column;
@@ -169,7 +185,7 @@ function homie_icon($category_id) {
         }
         .hero-section h2 { font-size: 42px; margin: 0 0 15px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
         .hero-section p { font-size: 20px; margin: 0 0 30px 0; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
-        
+
         .btn-menu-now {
             background-color: #fff; color: var(--primary-color); padding: 14px 35px;
             border-radius: 30px; font-size: 18px; font-weight: bold; text-decoration: none;
@@ -177,56 +193,48 @@ function homie_icon($category_id) {
         }
         .btn-menu-now:hover { background-color: var(--primary-color); color: white; transform: scale(1.05); }
 
-        /* Tiêu đề chung cho từng khung sản phẩm */
-        .section-block-title {
-            font-size: 26px; text-align: center; font-weight: bold;
-            text-transform: uppercase; margin-bottom: 30px; position: relative;
+        .section-title {
+            font-size: 26px; color: #d63031; text-align: center; font-weight: bold;
+            text-transform: uppercase; margin-bottom: 30px;
         }
-        .section-block-title i { margin: 0 8px; }
+        .section-title i { color: #f1c40f; margin: 0 8px; }
 
         .bestseller-box {
             background: #fff5f5; border: 2px dashed #ff7675; border-radius: 15px;
-            padding: 25px; margin-bottom: 45px;
+            padding: 25px; margin-bottom: 40px;
         }
-        .bestseller-box .section-block-title { color: #d63031; }
-        .bestseller-box .section-block-title i { color: #f1c40f; }
-
         .promo-box {
-            background: #fff9f0; border: 2px dashed #e17055; border-radius: 15px;
-            padding: 25px; margin-bottom: 45px;
+            background: #fff9f0; border: 2px dashed #e67e22; border-radius: 15px;
+            padding: 25px; margin-bottom: 40px;
         }
-        .promo-box .section-block-title { color: #e17055; }
-        .promo-box .section-block-title i { color: #e67e22; }
-
-        .new-box {
+        .new-products-section {
             background: #f0f8ff; border: 2px dashed #0984e3; border-radius: 15px;
-            padding: 25px; margin-bottom: 45px;
+            padding: 25px; margin-bottom: 40px;
         }
-        .new-box .section-block-title { color: #0984e3; }
-        .new-box .section-block-title i { color: #00cec9; }
 
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+
         .product-card {
             background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
             overflow: hidden; display: flex; flex-direction: column; border: 1px solid #f1f2f6; position: relative;
         }
-        .badge-corner {
+        .product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+
+        .badge-hot, .badge-promo, .badge-new {
             position: absolute; top: 10px; left: 10px; color: white;
             padding: 4px 10px; font-size: 11px; font-weight: bold; border-radius: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10;
         }
         .badge-hot { background: #e74c3c; }
-        .badge-promo { background: #e17055; }
+        .badge-promo { background: #e67e22; }
         .badge-new { background: #0984e3; }
-        
+
         .product-image {
-            width: 100%; height: 180px; background-color: #ffeaa7;
+            width: 100%; height: 170px; background-color: #ffeaa7;
             display: flex; align-items: center; justify-content: center; font-size: 55px; user-select: none;
             overflow: hidden;
         }
-        .product-image img {
-            width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;
-        }
+        .product-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
         .product-card:hover .product-image img { transform: scale(1.05); }
 
         .product-info { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
@@ -234,18 +242,15 @@ function homie_icon($category_id) {
         .product-desc { font-size: 13px; color: #636e72; margin: 0 0 15px 0; line-height: 1.4; flex-grow: 1; }
         .product-price-action { display: flex; justify-content: space-between; align-items: center; }
         .product-price { font-size: 17px; font-weight: bold; color: #e17055; }
-        .original-price { text-decoration: line-through; color: #b2bec3; font-size: 13px; margin-right: 6px; }
+        .price-old { font-size: 13px; color: #b2bec3; text-decoration: line-through; margin-right: 6px; }
         .sold-count { font-size: 12px; color: #7f8c8d; font-style: italic; background: #f1f2f6; padding: 2px 8px; border-radius: 10px; }
 
         .btn-buy-now {
             background-color: var(--primary-color); color: white; border: none;
-            padding: 7px 15px; border-radius: 20px; font-weight: bold; text-decoration: none; font-size: 13px;
-            cursor: pointer;
+            padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 13px; cursor: pointer;
         }
         .btn-buy-now:hover { background-color: #ff5252; }
-        .empty-block-msg { text-align: center; color: #7f8c8d; font-style: italic; padding: 10px; }
 
-        /* Khối tính năng nổi bật */
         .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
         .feature-card {
             background: white; padding: 30px; border-radius: 12px; text-align: center;
@@ -257,42 +262,35 @@ function homie_icon($category_id) {
 
         footer { text-align: center; padding: 30px; color: #7f8c8d; font-size: 14px; margin-top: 50px; border-top: 1px solid #e1e2e6; }
 
-        /* ============================
-           MODAL ĐẶT MUA NHANH (KHÔNG CHUYỂN TRANG)
-           ============================ */
+        /* ===== Modal Đặt Mua Nhanh ===== */
         .qo-modal {
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(26, 32, 44, 0.45); backdrop-filter: blur(4px);
-            justify-content: center; align-items: center; overflow-y: auto; padding: 20px;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.55); justify-content: center; align-items: center; z-index: 9999;
         }
         .qo-modal-content {
-            background: #fff; padding: 30px; border-radius: 18px; width: 100%; max-width: 440px;
-            animation: qoPopUp 0.2s ease-out; max-height: 90vh; overflow-y: auto;
+            background: white; padding: 25px; border-radius: 14px; width: 420px; max-width: 90%;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto;
         }
-        @keyframes qoPopUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .qo-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-        .qo-modal-header h3 { margin: 0; color: #d63031; font-size: 20px; }
-        .qo-close { cursor: pointer; font-size: 26px; color: #b2bec3; line-height: 1; }
-        .qo-close:hover { color: #d63031; }
-        .qo-modal-content label { display: block; font-weight: 600; font-size: 14px; margin: 12px 0 6px 0; color: #2d3436; }
-        .qo-modal-content input[type="text"], .qo-modal-content input[type="tel"] {
-            width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px;
-            outline: none; font-size: 14px; box-sizing: border-box;
+        .qo-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .qo-close { cursor: pointer; font-size: 24px; color: #999; }
+        .qo-radio-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+        .qo-radio-group label { font-size: 13px; }
+        #quickOrderForm label { display: block; margin-top: 10px; font-weight: bold; font-size: 14px; }
+        #quickOrderForm input[type="text"] {
+            width: 100%; padding: 9px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
         }
-        .qo-radio-group { display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; font-weight: normal; }
-        .qo-radio-group label { display: flex; align-items: center; gap: 4px; margin: 0; font-weight: normal; }
-        .qo-qty-control { display: flex; align-items: center; gap: 10px; }
+        .qo-qty-control { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
         .qo-qty-control button {
-            width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--primary-color);
-            background: white; color: var(--primary-color); font-size: 18px; font-weight: bold; cursor: pointer;
+            width: 32px; height: 32px; border: none; background: var(--primary-color); color: white;
+            border-radius: 50%; font-size: 16px; cursor: pointer;
         }
-        .qo-qty-control input { width: 60px; text-align: center; padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; }
-        .qo-total { margin-top: 18px; font-size: 16px; font-weight: bold; text-align: right; color: #d63031; }
+        .qo-qty-control input { width: 50px; text-align: center; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        .qo-total { font-weight: bold; font-size: 16px; margin-top: 15px; color: #e17055; }
         .qo-submit-btn {
-            width: 100%; margin-top: 15px; background-color: var(--primary-color); color: white;
-            border: none; padding: 13px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;
+            width: 100%; margin-top: 15px; padding: 12px; background: var(--primary-color); color: white;
+            border: none; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer;
         }
-        .qo-submit-btn:hover { background-color: #ff5252; }
+        .qo-submit-btn:hover { background: #ff5252; }
     </style>
 </head>
 <body>
@@ -301,13 +299,13 @@ function homie_icon($category_id) {
     <h1>🧋 Trà Sữa Homie 🧋</h1>
     <p>Thơm ngon từng giọt - Đậm vị yêu thương</p>
     <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
-        <a href="trang-chu.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
-        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-utensils"></i> Thực Đơn</a>
-        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a>
+        <a href="trang-chu.php" style="margin-right: 20px;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
+        <a href="index.php" style="margin-right: 20px;"><i class="fa-solid fa-utensils"></i> Thực Đơn</a>
+        <a href="lien-he.php"><i class="fa-solid fa-envelope"></i> Liên Hệ</a>
     </div>
-    
+
     <div class="auth-buttons">
-        <?php if(isset($_SESSION['username'])): ?>
+        <?php if (isset($_SESSION['username'])): ?>
             <span><i class="fa-solid fa-user"></i> Xin chào, <?= htmlspecialchars($_SESSION['username']) ?>!</span>
             <a href="dang-xuat.php"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
         <?php else: ?>
@@ -324,32 +322,25 @@ function homie_icon($category_id) {
         <a href="index.php" class="btn-menu-now"><i class="fa-solid fa-circle-play"></i> Xem Thực Đơn & Đặt Món Ngay</a>
     </div>
 
-    <!-- ================= KHUNG 1: BEST SELLER (TOP 3 BÁN CHẠY NHẤT) ================= -->
+    <!-- ================= KHUNG 1: BEST SELLER (TOP 3 TOÀN HỆ THỐNG) ================= -->
     <div class="bestseller-box">
-        <h2 class="section-block-title"><i class="fa-solid fa-crown"></i> Top Những Món Bán Chạy Nhất <i class="fa-solid fa-crown"></i></h2>
+        <h2 class="section-title"><i class="fa-solid fa-crown"></i> Gợi Ý Món Bán Chạy Nhất <i class="fa-solid fa-crown"></i></h2>
 
         <?php if (empty($best_sellers)): ?>
-            <p class="empty-block-msg">Hệ thống chưa ghi nhận lượt đặt mua nào. Hãy là người mua đầu tiên nhé!</p>
+            <p style="text-align: center; color: #7f8c8d; font-style: italic;">Hệ thống chưa ghi nhận lượt đặt mua nào. Hãy là người mua đầu tiên nhé!</p>
         <?php else: ?>
             <div class="product-grid">
                 <?php foreach ($best_sellers as $prod): ?>
                     <div class="product-card">
-                        <span class="badge-corner badge-hot"><i class="fa-solid fa-fire"></i> Bán Chạy</span>
-                        <div class="product-image">
-                            <?php if (!empty($prod['image_url']) && $prod['image_url'] != 'default.png' && file_exists($prod['image_url'])): ?>
-                                <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
-                            <?php else: ?>
-                                <?= homie_icon($prod['category_id']) ?>
-                            <?php endif; ?>
-                        </div>
+                        <span class="badge-hot"><i class="fa-solid fa-fire"></i> Bán Chạy</span>
+                        <div class="product-image"><?php homie_render_image($prod); ?></div>
                         <div class="product-info">
                             <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
                             <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
                             <div class="product-price-action">
                                 <div>
-                                    <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
-                                    <br>
-                                    <span class="sold-count">Đã bán: <?= $prod['total_sold'] ?> ly/đĩa</span>
+                                    <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span><br>
+                                    <span class="sold-count">Đã bán: <?= (int)$prod['total_sold'] ?> ly/đĩa</span>
                                 </div>
                                 <button type="button" class="btn-buy-now" onclick="moQuickOrder(<?= $prod['product_id'] ?>, '<?= addslashes($prod['product_name']) ?>', <?= $prod['price'] ?>, <?= $prod['category_id'] ?>)">Đặt Mua</button>
                             </div>
@@ -360,28 +351,21 @@ function homie_icon($category_id) {
         <?php endif; ?>
     </div>
 
-    <!-- ================= KHUNG 2: SẢN PHẨM KHUYẾN MÃI TRONG TUẦN ================= -->
+    <!-- ================= KHUNG 2: KHUYẾN MÃI TUẦN NÀY ================= -->
     <?php if (!empty($promotions)): ?>
     <div class="promo-box">
-        <h2 class="section-block-title"><i class="fa-solid fa-tags"></i> Ưu Đãi Tuần Này <i class="fa-solid fa-tags"></i></h2>
+        <h2 class="section-title"><i class="fa-solid fa-tags"></i> Khuyến Mãi Tuần Này <i class="fa-solid fa-tags"></i></h2>
         <div class="product-grid">
             <?php foreach ($promotions as $prod): ?>
                 <div class="product-card">
-                    <span class="badge-corner badge-promo"><i class="fa-solid fa-percent"></i> Giảm <?= $prod['discount_percent'] ?>%</span>
-                    <div class="product-image">
-                        <?php if (!empty($prod['image_url']) && $prod['image_url'] != 'default.png' && file_exists($prod['image_url'])): ?>
-                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
-                        <?php else: ?>
-                            <?= homie_icon($prod['category_id']) ?>
-                        <?php endif; ?>
-                    </div>
+                    <span class="badge-promo"><i class="fa-solid fa-percent"></i> Giảm <?= (int)$prod['discount_percent'] ?>%</span>
+                    <div class="product-image"><?php homie_render_image($prod); ?></div>
                     <div class="product-info">
                         <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
                         <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
                         <div class="product-price-action">
                             <div>
-                                <span class="original-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
-                                <br>
+                                <span class="price-old"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
                                 <span class="product-price"><?= number_format($prod['discounted_price'], 0, ',', '.') ?>đ</span>
                             </div>
                             <button type="button" class="btn-buy-now" onclick="moQuickOrder(<?= $prod['product_id'] ?>, '<?= addslashes($prod['product_name']) ?>', <?= $prod['discounted_price'] ?>, <?= $prod['category_id'] ?>)">Đặt Mua</button>
@@ -395,19 +379,13 @@ function homie_icon($category_id) {
 
     <!-- ================= KHUNG 3: SẢN PHẨM MỚI ================= -->
     <?php if (!empty($new_products)): ?>
-    <div class="new-box">
-        <h2 class="section-block-title"><i class="fa-solid fa-sparkles"></i> Món Mới Ra Mắt <i class="fa-solid fa-sparkles"></i></h2>
+    <div class="new-products-section">
+        <h2 class="section-title"><i class="fa-solid fa-star"></i> Món Mới Ra Mắt <i class="fa-solid fa-star"></i></h2>
         <div class="product-grid">
             <?php foreach ($new_products as $prod): ?>
                 <div class="product-card">
-                    <span class="badge-corner badge-new"><i class="fa-solid fa-star"></i> Mới</span>
-                    <div class="product-image">
-                        <?php if (!empty($prod['image_url']) && $prod['image_url'] != 'default.png' && file_exists($prod['image_url'])): ?>
-                            <img src="<?= htmlspecialchars($prod['image_url']) ?>" alt="<?= htmlspecialchars($prod['product_name']) ?>">
-                        <?php else: ?>
-                            <?= homie_icon($prod['category_id']) ?>
-                        <?php endif; ?>
-                    </div>
+                    <span class="badge-new"><i class="fa-solid fa-sparkles"></i> Mới</span>
+                    <div class="product-image"><?php homie_render_image($prod); ?></div>
                     <div class="product-info">
                         <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
                         <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
@@ -516,7 +494,6 @@ function moQuickOrder(id, name, price, categoryId) {
     let toppingLabel = document.getElementById('qoToppingLabel');
     let toppingInput = document.getElementById('qo_topping_note');
 
-    // Danh mục 1 (Ăn Vặt) và 4 (Mỳ Cay - Lẩu) là món ăn, không cần chọn đường/đá
     if (categoryId == 1 || categoryId == 4) {
         drinkOptions.style.display = 'none';
         toppingLabel.innerText = 'Ghi chú cho món ăn:';
@@ -567,10 +544,11 @@ window.addEventListener('click', function (event) {
     <script>alert('❌ Có lỗi hệ thống xảy ra khi lưu đơn hàng. Vui lòng thử lại sau!');</script>
 <?php endif; ?>
 
+<?php include_once 'lien-he-noi.php'; ?>
+
 <footer>
     <p>© 2026 Trà Sữa Homie - All Rights Reserved. Thiết kế bởi nhóm dự án web_tra_sua.</p>
 </footer>
 <?php include 'footer.php'; ?>
 </body>
 </html>
-<!-- okoko -->
