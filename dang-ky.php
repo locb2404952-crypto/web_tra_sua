@@ -1,5 +1,5 @@
 <?php
-include 'db-connect.php'; // Nhúng file kết nối database của bạn
+require_once 'includes/db-connect.php'; // Nhúng file kết nối database của bạn
 
 $error = "";
 $success = "";

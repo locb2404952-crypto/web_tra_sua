@@ -1,6 +1,6 @@
 <?php
 session_start(); // Kích hoạt Session để lưu trạng thái đăng nhập
-include 'db-connect.php'; 
+require_once 'includes/db-connect.php'; 
 
 $error = "";
 
