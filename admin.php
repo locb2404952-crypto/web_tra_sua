@@ -103,12 +103,40 @@ if (isset($_POST['edit_product'])) {
     }
 }
 
+// 6b. XỬ LÝ CHỨC NĂNG: THÊM SẢN PHẨM VÀO KHUYẾN MÃI TUẦN NÀY (Trang chủ - Khung 2)
+if (isset($_POST['add_promotion'])) {
+    $promo_product_id = intval($_POST['promo_product_id']);
+    $promo_discount = intval($_POST['promo_discount']);
+
+    if ($promo_product_id > 0 && $promo_discount > 0) {
+        $sql_add_promo = "INSERT INTO promotions (product_id, discount_percent, is_active) VALUES ($promo_product_id, $promo_discount, 1)";
+        mysqli_query($conn, $sql_add_promo);
+    }
+    header("Location: admin.php");
+    exit();
+}
+
+// 6c. XỬ LÝ CHỨC NĂNG: TẮT KHUYẾN MÃI (Khi hết tuần / không áp dụng nữa)
+if (isset($_GET['deactivate_promo_id'])) {
+    $promotion_id = intval($_GET['deactivate_promo_id']);
+    $sql_deactivate = "UPDATE promotions SET is_active = 0 WHERE promotion_id = $promotion_id";
+    mysqli_query($conn, $sql_deactivate);
+    header("Location: admin.php");
+    exit();
+}
+
 // 7. Lấy danh sách sản phẩm hiển thị ra bảng
 $sql = "SELECT p.*, c.category_name 
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.category_id 
         ORDER BY p.product_id DESC";
 $result = mysqli_query($conn, $sql);
+$products_list = [];
+if ($result) {
+    while ($p = mysqli_fetch_assoc($result)) {
+        $products_list[] = $p;
+    }
+}
 
 // 8. Lấy danh sách danh mục để đổ vào thẻ chọn <select>
 $sql_cates = "SELECT * FROM categories ORDER BY category_name ASC";
@@ -116,6 +144,22 @@ $result_cates = mysqli_query($conn, $sql_cates);
 $categories_list = [];
 while($cat = mysqli_fetch_assoc($result_cates)) {
     $categories_list[] = $cat;
+}
+
+// 8b. Lấy danh sách khuyến mãi đang áp dụng để hiển thị bảng quản lý khuyến mãi
+$sql_promo_list = "
+    SELECT pr.promotion_id, pr.discount_percent, pr.created_at, p.product_name, p.price
+    FROM promotions pr
+    JOIN products p ON pr.product_id = p.product_id
+    WHERE pr.is_active = 1
+    ORDER BY pr.created_at DESC
+";
+$result_promo_list = mysqli_query($conn, $sql_promo_list);
+$promo_list = [];
+if ($result_promo_list) {
+    while ($pr = mysqli_fetch_assoc($result_promo_list)) {
+        $promo_list[] = $pr;
+    }
 }
 
 // ==========================================
@@ -256,7 +300,8 @@ $result_orders = mysqli_query($conn, $sql_orders);
             <thead>
                 <tr>
                     <th style="width: 8%; text-align: center;">STT</th>
-                    <th style="width: 44%;">Thông tin món ăn / Đồ uống</th>
+                    <th style="width: 10%; text-align: center;">Ảnh</th>
+                    <th style="width: 34%;">Thông tin món ăn / Đồ uống</th>
                     <th style="width: 18%;">Danh mục</th>
                     <th style="width: 15%;">Giá bán</th>
                     <th style="width: 15%; text-align: center;">Thao tác</th>
@@ -264,12 +309,19 @@ $result_orders = mysqli_query($conn, $sql_orders);
             </thead>
             <tbody>
                 <?php 
-                if ($result && mysqli_num_rows($result) > 0) {
+                if (!empty($products_list)) {
                     $stt = 1;
-                    while($row = mysqli_fetch_assoc($result)) {
+                    foreach ($products_list as $row) {
                         ?>
                         <tr>
                             <td class="stt-num"><?php echo $stt++; ?></td>
+                            <td style="text-align:center;">
+                                <?php if (!empty($row['image_url']) && $row['image_url'] !== 'default.png' && file_exists($row['image_url'])): ?>
+                                    <img src="<?php echo htmlspecialchars($row['image_url']); ?>" alt="" style="width:48px; height:48px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0;">
+                                <?php else: ?>
+                                    <span style="display:inline-block; width:48px; height:48px; line-height:48px; text-align:center; background:#f1f2f6; border-radius:8px; color:#a0aec0; font-size:11px;">Chưa có</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <div class="product-info">
                                     <div class="product-name-txt"><?php echo htmlspecialchars($row['product_name']); ?></div>
@@ -288,7 +340,52 @@ $result_orders = mysqli_query($conn, $sql_orders);
                         <?php
                     }
                 } else {
-                    echo "<tr><td colspan='5' style='text-align:center; padding: 30px; color: #a0aec0;'>Chưa có món ăn nào.</td></tr>";
+                    echo "<tr><td colspan='6' style='text-align:center; padding: 30px; color: #a0aec0;'>Chưa có món ăn nào.</td></tr>";
+                }
+                ?>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section-title">🏷️ QUẢN LÝ KHUYẾN MÃI TUẦN (TRANG CHỦ - KHUNG 2)</div>
+    <p style="color:#718096; font-size:14px; margin-bottom:18px;">
+        Chọn sản phẩm và mức ưu đãi để hiển thị ở khung "Ưu Đãi Tuần Này" trên trang chủ. 
+        Nếu tuần này không chọn sản phẩm nào (danh sách bên dưới trống), khung khuyến mãi sẽ tự động ẩn khỏi trang chủ.
+    </p>
+    <button class="btn-trigger-add" onclick="openModal('addPromotionModal')">
+        + Thêm Sản Phẩm Khuyến Mãi
+    </button>
+
+    <div class="table-wrapper">
+        <table class="product-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%; text-align: center;">STT</th>
+                    <th style="width: 40%;">Sản phẩm</th>
+                    <th style="width: 15%;">Giá gốc</th>
+                    <th style="width: 15%;">Mức giảm</th>
+                    <th style="width: 20%; text-align: center;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                if (!empty($promo_list)) {
+                    $stt_p = 1;
+                    foreach ($promo_list as $pr) {
+                        ?>
+                        <tr>
+                            <td class="stt-num"><?php echo $stt_p++; ?></td>
+                            <td class="product-name-txt"><?php echo htmlspecialchars($pr['product_name']); ?></td>
+                            <td class="product-price"><?php echo number_format($pr['price'], 0, ',', '.'); ?>đ</td>
+                            <td><span class="cate-badge">-<?php echo $pr['discount_percent']; ?>%</span></td>
+                            <td style="text-align:center;">
+                                <button class="btn btn-delete" onclick="if(confirm('Ngừng áp dụng khuyến mãi cho món này?')) window.location.href='admin.php?deactivate_promo_id=<?php echo $pr['promotion_id']; ?>'">Tắt Khuyến Mãi</button>
+                            </td>
+                        </tr>
+                        <?php
+                    }
+                } else {
+                    echo "<tr><td colspan='5' style='text-align:center; padding: 30px; color: #a0aec0;'>Chưa chọn sản phẩm khuyến mãi nào cho tuần này.</td></tr>";
                 }
                 ?>
             </tbody>
@@ -439,6 +536,35 @@ $result_orders = mysqli_query($conn, $sql_orders);
     </div>
 </div>
 
+<div id="addPromotionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">Thêm Sản Phẩm Khuyến Mãi Tuần Này</div>
+        <form action="admin.php" method="POST">
+            <div class="form-group">
+                <label>Chọn sản phẩm:</label>
+                <select name="promo_product_id" class="form-control" required>
+                    <option value="">-- Chọn một sản phẩm --</option>
+                    <?php foreach($products_list as $p): ?>
+                        <option value="<?php echo $p['product_id']; ?>"><?php echo htmlspecialchars($p['product_name']); ?> (<?php echo number_format($p['price'], 0, ',', '.'); ?>đ)</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Mức ưu đãi:</label>
+                <select name="promo_discount" class="form-control" required>
+                    <option value="10">Giảm 10%</option>
+                    <option value="15">Giảm 15%</option>
+                    <option value="20">Giảm 20%</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn" style="background:#edf2f7; color:#4a5568;" onclick="closeModal('addPromotionModal')">Hủy bỏ</button>
+                <button type="submit" name="add_promotion" class="btn" style="background: #ff4d6d; color:white;">Lưu Khuyến Mãi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
     function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
@@ -461,8 +587,10 @@ $result_orders = mysqli_query($conn, $sql_orders);
     window.onclick = function(event) {
         let addModal = document.getElementById('addProductModal');
         let editModal = document.getElementById('editProductModal');
+        let promoModal = document.getElementById('addPromotionModal');
         if (event.target == addModal) addModal.style.display = 'none';
         if (event.target == editModal) editModal.style.display = 'none';
+        if (event.target == promoModal) promoModal.style.display = 'none';
     }
 </script>
 </body>

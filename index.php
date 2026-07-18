@@ -67,6 +67,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['btn_dat_hang'])) {
 // 2. LẤY DANH SÁCH DANH MỤC SẢN PHẨM RA GIAO DIỆN
 $sql_categories = "SELECT * FROM categories";
 $result_categories = mysqli_query($conn, $sql_categories);
+
+// ========================================================
+// LẤY 4 MÓN MỚI NHẤT (theo thời gian đăng tải) ĐỂ HIỂN THỊ LÊN ĐẦU THỰC ĐƠN
+// ========================================================
+$sql_new_products = "
+    SELECT p.*, c.category_name 
+    FROM products p
+    JOIN categories c ON p.category_id = c.category_id
+    ORDER BY p.created_at DESC, p.product_id DESC
+    LIMIT 4
+";
+$result_new_products = mysqli_query($conn, $sql_new_products);
+$new_products = [];
+if ($result_new_products) {
+    while ($row = mysqli_fetch_assoc($result_new_products)) {
+        $new_products[] = $row;
+    }
+}
+
+// Hàm kiểm tra ảnh sản phẩm: chỉ hiện <img> khi file ảnh thật sự tồn tại trên server,
+// nếu không thì hiện icon emoji thay thế (tránh hiện icon ảnh vỡ)
+function homie_render_image($prod, $icon) {
+    if (!empty($prod['image_url']) && $prod['image_url'] !== 'default.png' && file_exists($prod['image_url'])) {
+        echo '<img src="' . htmlspecialchars($prod['image_url']) . '" alt="' . htmlspecialchars($prod['product_name']) . '">';
+    } else {
+        echo $icon;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -99,6 +127,28 @@ $result_categories = mysqli_query($conn, $sql_categories);
         .category-title { font-size: 24px; color: #d63031; border-bottom: 3px solid var(--primary-color); padding-bottom: 6px; margin-bottom: 25px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; }
         .product-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
         .product-card { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; display: flex; flex-direction: column; border: 1px solid #f1f2f6; }
+        .new-products-section {
+            background: #f0f8ff; border: 2px dashed #0984e3; border-radius: 15px;
+            padding: 20px; margin-bottom: 25px;
+        }
+        .category-title {
+            font-size: 24px; color: #d63031; border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 6px; margin-bottom: 25px; display: inline-block;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        /* CHỈNH SỬA: Ép lưới hiển thị đúng 4 ảnh sản phẩm trên 1 hàng để giao diện cân đối */
+        .product-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, minmax(0, 1fr)); 
+            gap: 20px; 
+        }
+
+        .product-card {
+            background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex; flex-direction: column; border: 1px solid #f1f2f6;
+        }
         .product-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(255, 118, 117, 0.15); }
         .product-image { width: 100%; height: 160px; background-color: #ffeaa7; display: flex; align-items: center; justify-content: center; font-size: 55px; user-select: none; overflow: hidden; }
         .product-image img { width: 100%; height: 100%; object-fit: cover; }
@@ -154,6 +204,13 @@ $result_categories = mysqli_query($conn, $sql_categories);
 </div>
 
 <header>
+    <h1>🧋 Trà Sữa Homie 🧋</h1>  <p>Thơm ngon từng giọt - Đậm vị yêu thương</p> 
+    <div class="main-menu" style="margin-top: 15px; margin-bottom: 5px;">
+        <a href="trang-chu.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-house"></i> Trang Chủ</a>
+        <a href="index.php" style="color: white; margin-right: 20px; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-utensils"></i> Thực Đơn</a>
+        <a href="lien-he.php" style="color: white; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-envelope"></i> Liên Hệ</a> 
+    </div>
+    
     <div class="auth-buttons"> <?php if(isset($_SESSION['username'])): ?>
             <span><i class="fa-solid fa-user"></i> Xin chào, <?= htmlspecialchars($_SESSION['username']) ?>!</span>
             <a href="dang-xuat.php"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
@@ -177,6 +234,50 @@ $result_categories = mysqli_query($conn, $sql_categories);
     </div>
 
     <div class="homie-right-content">
+        <?php
+        // Hàm dùng chung để render 1 thẻ sản phẩm (tránh lặp code giữa khối Món Mới và các danh mục)
+        function homie_render_product_card($prod, $cat_id) {
+            $icon = "🧋";
+            if ($cat_id == 1) $icon = "🍟";
+            if ($cat_id == 2) $icon = "☕";
+            if ($cat_id == 4) $icon = "🍜";
+            if ($cat_id == 5) $icon = "🥑";
+            if ($cat_id == 7) $icon = "🍓";
+            ?>
+            <div class="product-card">
+                <div class="product-image">
+                    <?php homie_render_image($prod, $icon); ?>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name"><?= htmlspecialchars($prod['product_name']) ?></h3>
+                    <p class="product-desc"><?= htmlspecialchars($prod['description']) ?></p>
+                    <div class="product-price-action">
+                        <span class="product-price"><?= number_format($prod['price'], 0, ',', '.') ?>đ</span>
+                        <div class="action-buttons-group">
+                            <button class="btn-select" onclick="moTuyChonMon(<?= $prod['product_id'] ?>, '<?= htmlspecialchars(addslashes($prod['product_name'])) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">Mua</button>
+                            <button class="btn-mini-cart" title="Thêm nhanh vào giỏ hàng" onclick="themNhanhVaoGioHang(<?= $prod['product_id'] ?>, '<?= htmlspecialchars(addslashes($prod['product_name'])) ?>', <?= $prod['price'] ?>, <?= $cat_id ?>)">
+                                <i class="fa-solid fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php
+        }
+        ?>
+
+        <?php if (!empty($new_products)): ?>
+        <div class="category-section new-products-section">
+            <h2 class="category-title" style="color:#0984e3; border-bottom-color:#0984e3;"><i class="fa-solid fa-sparkles"></i> Món Mới</h2>
+            <div class="product-grid">
+                <?php foreach ($new_products as $np): ?>
+                    <?php homie_render_product_card($np, $np['category_id']); ?>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <br><br>
+        <?php endif; ?>
+
         <?php 
         if (isset($result_categories)) {
             mysqli_data_seek($result_categories, 0);
@@ -223,6 +324,7 @@ $result_categories = mysqli_query($conn, $sql_categories);
                         </div>
                     </div>
                     <?php
+                    homie_render_product_card($prod, $cat_id);
                 }
                 echo '</div></div><br><br>';
             }
