@@ -1473,3 +1473,94 @@ html {
   color: #b2bec3;
   margin-bottom: 15px;
 }
+/* ============================================================ */
+/* CẤU HÌNH CỤM NÚT LIÊN HỆ & NÚT GIỎ HÀNG NỔI GÓC PHẢI CHUẨN   */
+/* ============================================================ */
+.sticky-contact-bar {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  z-index: 9998 !important;
+  align-items: center !important;
+}
+
+.sticky-contact-bar .contact-btn {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.3s !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+
+.sticky-contact-bar .zalo-btn {
+  width: 45px !important;
+  height: 45px !important;
+  background: #0068ff !important;
+  border-radius: 50% !important;
+}
+
+.sticky-contact-bar .zalo-btn img {
+  width: 25px !important;
+  height: 25px !important;
+}
+
+.sticky-contact-bar .phone-btn {
+  width: 45px !important;
+  height: 45px !important;
+  background: #2ecc71 !important;
+  border-radius: 50% !important;
+  color: white !important;
+  font-size: 20px !important;
+  text-decoration: none !important;
+}
+
+.sticky-contact-bar .toggle-btn {
+  width: 35px !important;
+  height: 35px !important;
+  background: #ff7675 !important;
+  border-radius: 50% !important;
+  color: white !important;
+  font-size: 14px !important;
+}
+
+/* Nút giỏ hàng nổi màu hồng đồng bộ kích thước */
+.sticky-contact-bar .floating-cart-btn {
+  width: 50px !important;
+  height: 50px !important;
+  background: #ff7675 !important;
+  border-radius: 50% !important;
+  color: white !important;
+  font-size: 22px !important;
+  position: relative !important;
+  margin-top: 5px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  box-shadow: 0 4px 12px rgba(255, 118, 117, 0.4) !important;
+}
+
+.sticky-contact-bar .floating-cart-btn:hover,
+.sticky-contact-bar .contact-btn:hover {
+  transform: scale(1.1) !important;
+}
+
+/* Bong bóng đỏ đếm số lượng món ăn */
+.sticky-contact-bar .cart-badge {
+  position: absolute !important;
+  top: -5px !important;
+  right: -5px !important;
+  background: red !important;
+  color: white !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  border-radius: 50% !important;
+  padding: 2px 6px !important;
+  min-width: 14px !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
