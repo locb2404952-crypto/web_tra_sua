@@ -1,5 +1,9 @@
 <?php
-session_start(); // Kích hoạt Session để lưu trạng thái đăng nhập
+// Kiểm tra và bật Session (nếu chưa có) để tránh xung đột với header
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once 'includes/db-connect.php'; 
 
 $error = "";
@@ -21,19 +25,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
             
-            // KIỂM TRA MẬT KHẨU: 
+            // KIỂM TRA MẬT KHẨU THÔ (Giữ nguyên theo logic cũ của bạn)
             if ($input_password == $user['password']) {
                 
                 // ĐĂNG NHẬP THÀNH CÔNG: Lưu thông tin vào Session
-                $_SESSION['user_id'] = $user['user_id'];      // Mã user_id thật gửi cho Huy kết nối đơn hàng
-                $_SESSION['username'] = $user['full_name'];   // Lưu tên hiển thị 
-                $_SESSION['role'] = $user['role'];           // Quyết định quyền truy cập trang Admin
+                $_SESSION['user_id'] = $user['user_id'];      
+                $_SESSION['username'] = $user['full_name'];   
+                $_SESSION['role'] = $user['role'];           
                 
                 // Điều hướng thông minh dựa vào quyền hạn của tài khoản
                 if ($_SESSION['role'] === 'admin') {
-                    header("Location: admin.php"); // Nếu là admin thì bay thẳng vào trang quản lý
+                    header("Location: admin.php"); 
                 } else {
-                    header("Location: index.php"); // Nếu là khách thường thì về trang chủ đặt trà sữa
+                    header("Location: index.php"); 
                 }
                 exit();
             } else {
@@ -44,33 +48,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 }
+
+// 1. NHÚNG HEADER VÀO ĐẦU TRANG
+include 'includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Đăng Nhập - Trà Sữa Homie</title>
-    <style>
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f5f5f5; margin: 0; }
-        .form-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 320px; }
-        h2 { text-align: center; color: #333; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        button:hover { background: #0056b3; }
-        .error { color: red; background: #f8d7da; padding: 8px; border-radius: 4px; text-align: center; font-size: 14px; }
-    </style>
-</head>
-<body>
-    <div class="form-container">
-        <h2>Đăng Nhập</h2>
+
+<!-- Bọc form vào cấu trúc container chuẩn để giao diện cân đối, mượt mà giữa Header và Footer -->
+<div class="container" style="max-width: 450px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin: 40px auto;">
+    <h2 style="text-align: center; color: #ff7675; margin-bottom: 25px;">Đăng Nhập</h2>
+    
+    <?php if($error) echo "<p class='error' style='color: red; background: #ffe0e0; padding: 10px; border-radius: 5px; margin-bottom: 20px;'>$error</p>"; ?>
+    
+    <!-- Áp dụng class form-control để input đồng bộ theo style.css tổng -->
+    <form action="" method="POST">
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>Địa chỉ Email</label>
+            <input type="email" name="email" class="form-control" placeholder="Nhập địa chỉ Email (VD: admin@trasua.com)" required>
+        </div>
         
-        <?php if($error) echo "<p class='error'>$error</p>"; ?>
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Mật khẩu</label>
+            <input type="password" name="password" class="form-control" placeholder="Nhập Mật khẩu" required>
+        </div>
         
-        <form action="" method="POST">
-            <input type="email" name="email" placeholder="Nhập địa chỉ Email (VD: admin@trasua.com)" required>
-            <input type="password" name="password" placeholder="Nhập Mật khẩu" required>
-            <button type="submit">Đăng Nhập</button>
-        </form>
-    </div>
-</body>
-</html>
+        <button type="submit" class="btn-select" style="width: 100%; padding: 12px; font-size: 16px;">Đăng Nhập</button>
+    </form>
+    
+    <p style="text-align: center; margin-top: 20px; font-size: 14px;">
+        Chưa có tài khoản Homie? <a href="dang-ky.php" style="color: #ff7675; font-weight: bold; text-decoration: none;">Đăng ký ngay</a>
+    </p>
+</div>
+
+<?php 
+// 2. NHÚNG FOOTER VÀO CUỐI TRANG
+include 'includes/footer.php'; 
+?>

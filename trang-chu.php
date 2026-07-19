@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 // Gọi file kết nối database
@@ -52,7 +51,8 @@ if ($result_best_seller) {
         <h2 class="bestseller-title"><i class="fa-solid fa-crown"></i> Gợi Ý Món Bán Chạy Nhất (Best Seller) <i class="fa-solid fa-crown"></i></h2>
         
         <?php if (empty($best_sellers_by_cat)): ?>
-            <p style="text-align: center; color: #7f8c8d; font-style: italic;">Hệ thống chưa ghi nhận lượt đặt mua nào. Hãy là người mua đầu tiên nhé!</p>
+            <!-- Đã bóc tách Inline Style thành Class sạch sẽ -->
+            <p class="empty-bestseller-msg">Hệ thống chưa ghi nhận lượt đặt mua nào. Hãy là người mua đầu tiên nhé!</p>
         <?php else: ?>
             <?php foreach ($best_sellers_by_cat as $cat_name => $products): ?>
                 <div class="bs-cat-group">
